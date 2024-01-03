@@ -2,15 +2,6 @@ name: Compare screenshots
 
 on:
   workflow_call:
-    secrets:
-      MPKIT_EMAIL:
-        required: true
-      MPKIT_TOKEN:
-        required: true
-      POS_CI_REPO_ACCESS_TOKEN:
-        required: true
-      SLACK_WEBHOOK_URL:
-        required: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
