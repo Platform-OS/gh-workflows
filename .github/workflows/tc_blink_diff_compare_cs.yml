@@ -1,0 +1,94 @@
+name: Compare screenshots
+
+on:
+  workflow_call:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  pre_job:
+    # continue-on-error: true # Uncomment once integration is finished
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          github_token: ${{ github.token }}
+          paths_ignore: '["**/README.md"]'
+          do_not_skip: '["push"]'
+
+  reserve-ci-instance:
+    needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    container: alpine:3.15
+    outputs:
+      mpkit-url: ${{ steps.reserve.outputs.mpkit-url }}
+      report-path: ${{ steps.reserve.outputs.report-path }}
+    steps:
+      - name: Get ci-instance-url
+        id: reserve
+        uses: Platform-OS/ci-repository-reserve-instance-url@0.0.9
+        with:
+          repository-url: https://ci-repository.staging.oregon.platform-os.com
+          method: reserve
+          pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
+
+  compare:
+    needs: ["reserve-ci-instance"]
+    runs-on: ubuntu-latest
+    container: platformos/testcafe:4.7.2-2.1.0
+    timeout-minutes: 35
+    strategy:
+      max-parallel: 1
+      matrix:
+        resolution: ["desktop", "mobile"]
+    env:
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+      UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
+      CI: true
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Build
+        shell: sh
+        run: |
+          set -eu
+          npm install
+          npm run build
+
+      - name: Seed
+        shell: sh
+        run: |
+         set -e
+         sh seed/seed.sh
+
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@0.0.5
+        name: Compare screenshots for ${{ matrix.resolution }} resolution
+        if: success() || failure()
+        with:
+          test-name: tc-${{ matrix.resolution }}-snapshots-diff
+          base: master
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          resolution: ${{ matrix.resolution }}
+
+  cleanup:
+    if: ${{ always() }}
+    needs: ["reserve-ci-instance","compare"]
+    runs-on: ubuntu-latest
+    container: alpine:3.15
+    steps:
+      - name: release ci-instance-url
+        uses: Platform-OS/ci-repository-reserve-instance-url@0.0.9
+        with:
+          method: release
+          repository-url: https://ci-repository.staging.oregon.platform-os.com
+          pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
