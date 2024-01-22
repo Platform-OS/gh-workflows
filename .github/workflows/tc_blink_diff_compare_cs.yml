@@ -2,6 +2,10 @@ name: Compare screenshots
 
 on:
   workflow_call:
+    inputs:
+      project-name:
+        required: false
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -74,9 +78,10 @@ jobs:
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         if: success() || failure()
         with:
-          test-name: tc-${{ matrix.resolution }}-snapshots-diff
           base: master
+          project-name: ${{ inputs.project-name }}
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-diff
         env:
           resolution: ${{ matrix.resolution }}
 
