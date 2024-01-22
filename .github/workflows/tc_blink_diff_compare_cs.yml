@@ -74,7 +74,7 @@ jobs:
          set -e
          sh seed/seed.sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff@0.0.7
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@0.0.8
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         if: success() || failure()
         with:
