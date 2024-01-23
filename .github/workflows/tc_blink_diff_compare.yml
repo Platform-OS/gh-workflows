@@ -140,7 +140,7 @@ jobs:
         with:
           npm-prefix: tests
           test-name: tc-${{ matrix.resolution }}-snapshots-diff
-          base: main
+          base: release_candidate
           slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
         env:
           resolution: ${{ matrix.resolution }}
