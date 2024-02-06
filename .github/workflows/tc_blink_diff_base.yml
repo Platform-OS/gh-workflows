@@ -58,13 +58,13 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
-          node-version: 17
+          node-version: 16
 
       - name: Cache Node Modules
         id: cache-node-modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             front_app/node_modules
@@ -115,12 +115,12 @@ jobs:
   capture:
     needs: ["reserve-ci-instance","deploy"]
     runs-on: ubuntu-latest
-    container: platformos/testcafe:4.7.2-2.1.0
+    container: platformos/testcafe:4.17.0-3.5.0
     timeout-minutes: 35
     strategy:
       max-parallel: 1
       matrix:
-        resolution: ["desktop", "mobile"]
+        resolution: ["desktop", "tablet", "mobile"]
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
@@ -149,7 +149,7 @@ jobs:
 
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance","capture"]
+    needs: ["reserve-ci-instance","deploy","capture"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
