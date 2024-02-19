@@ -211,7 +211,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                      "text": "${{ env.result_icon }} <${{ desktop_report_url }}|View test report>\n${{ env.result_icon }} <${{ tablet_report_url }}|View test report>\n${{ env.result_icon }} <${{ mobile_report_url }}|View test report>\n"
+                      "text": "${{ env.result_icon }} <${{ needs.compare.outputs.diff-report-url }}|View test report for ${{ env.resolution }}>\n${{ env.result_icon }} <${{ needs.compare.outputs.diff-report-url }}|View test report for ${{ env.resolution }}>\n"
                   }
                 }
               ]
