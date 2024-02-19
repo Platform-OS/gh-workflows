@@ -111,7 +111,7 @@ jobs:
   compare:
     needs: ["reserve-ci-instance","deploy"]
     runs-on: ubuntu-latest
-    container: platformos/testcafe:4.7.2-2.1.0
+    container: platformos/testcafe:4.17.0-3.5.0
     timeout-minutes: 35
     strategy:
       max-parallel: 1
@@ -136,18 +136,94 @@ jobs:
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff@0.0.5
         name: Compare screenshots for ${{ matrix.resolution }} resolution
+        id: diff-test
         if: success() || failure()
         with:
           npm-prefix: tests
           test-name: tc-${{ matrix.resolution }}-snapshots-diff
           base: release_candidate
-          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
         env:
           resolution: ${{ matrix.resolution }}
 
+  notify:
+    needs: ["reserve-ci-instance", "deploy", "compare"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CI: true
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+      UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
+    steps:
+
+      - name: Send notification to Slack
+        id: notify-slack
+        if: success() || failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "channel": "test-reports",
+              "text": "Visual regression tests",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "testcafe blink diff visual regression tests for ${{ env.resolution }} resolution"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Actor:*\n${{ github.actor }}\n"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View action run>"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                      "text": "${{ env.result_icon }} <${{ env.desktop_report_url }}|View test report>\n${{ env.result_icon }} <${{ env.tablet_report_url }}|View test report>\n${{ env.result_icon }} <${{ env.mobile_report_url }}|View test report>\n"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          result_icon: ${{ steps.diff-test.conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance","compare"]
+    needs: ["reserve-ci-instance"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
