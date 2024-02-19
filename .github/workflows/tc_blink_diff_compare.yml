@@ -109,7 +109,7 @@ jobs:
           sh ./tests/seed.sh
 
   compare:
-    needs: ["reserve-ci-instance","deploy"]
+    needs: ["reserve-ci-instance", "deploy"]
     runs-on: ubuntu-latest
     container: platformos/testcafe:4.17.0-3.5.0
     timeout-minutes: 35
@@ -117,6 +117,9 @@ jobs:
       max-parallel: 1
       matrix:
         resolution: ["desktop", "mobile"]
+    outputs:
+      desktop-diff-url: ${{ steps.diff-test.outputs.diff-report-url }}
+      mobile-diff-url: ${{ steps.diff-test.outputs.diff-report-url }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
@@ -171,7 +174,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "testcafe blink diff visual regression tests for ${{ env.resolution }} resolution"
+                    "text": "testcafe blink diff visual regression tests"
                   }
                 },
                 {
@@ -211,7 +214,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                      "text": "${{ env.result_icon }} <${{ needs.compare.outputs.diff-report-url }}|View test report for ${{ env.resolution }}>\n${{ env.result_icon }} <${{ needs.compare.outputs.diff-report-url }}|View test report for ${{ env.resolution }}>\n"
+                      "text": "${{ env.result_icon }} <${{ needs.compare.outputs.desktop-diff-url }}|View test report for ${{ env.resolution }}>\n${{ env.result_icon }} <${{ needs.compare.outputs.mobile-diff-url }}|View test report for ${{ env.resolution }}>\n"
                   }
                 }
               ]
@@ -223,7 +226,7 @@ jobs:
 
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance"]
+    needs: ["reserve-ci-instance", "deploy", "compare", "notify"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
