@@ -134,7 +134,7 @@ jobs:
           npm install --prefix tests
         shell: sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff@bedb4e118722942e3788e410592fed2f85f467cf
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@26bef0005126e6580db4c926b57553053edbef5d
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         id: diff-test
         if: success() || failure()
