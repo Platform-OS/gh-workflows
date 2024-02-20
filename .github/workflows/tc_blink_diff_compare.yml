@@ -148,6 +148,11 @@ jobs:
         env:
           resolution: ${{ matrix.resolution }}
 
+      - name: Set conclusion result for the compare screenshot step
+        run:
+          set -eu
+          echo "${{ matrix.resolution }}-conclusion=${{ steps.diff-test.conclusion }}" >> $GITHUB_OUTPUT
+
   notify:
     needs: ["reserve-ci-instance", "deploy", "compare"]
     runs-on: ubuntu-latest
@@ -214,7 +219,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                      "text": "${{ env.result_icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for ${{ env.resolution }}>\n${{ env.result_icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for ${{ env.resolution }}>\n"
+                      "text": "${{ env.result_icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.result_icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
                   }
                 }
               ]
@@ -222,7 +227,8 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-          result_icon: ${{ steps.diff-test.conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          desktop-result-icon: ${{ needs.compare.steps.diff-test.desktop-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          mobile-result-icon: ${{ needs.compare.steps.diff-test.mobile-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
 
   cleanup:
     if: ${{ always() }}
