@@ -118,8 +118,8 @@ jobs:
       matrix:
         resolution: ["desktop", "mobile"]
     outputs:
-      desktop-diff-url: ${{ steps.diff-test.outputs.diff-report-url }}
-      mobile-diff-url: ${{ steps.diff-test.outputs.diff-report-url }}
+      desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
+      mobile-diff-report-url: ${{ steps.diff-test.outputs.mobile-diff-report-url }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
@@ -137,7 +137,7 @@ jobs:
           npm install --prefix tests
         shell: sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff@26bef0005126e6580db4c926b57553053edbef5d
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@20b07670161d5a36b0a9262ebe17490fd7e7d764
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         id: diff-test
         if: success() || failure()
@@ -214,7 +214,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                      "text": "${{ env.result_icon }} <${{ needs.compare.outputs.desktop-diff-url }}|View test report for ${{ env.resolution }}>\n${{ env.result_icon }} <${{ needs.compare.outputs.mobile-diff-url }}|View test report for ${{ env.resolution }}>\n"
+                      "text": "${{ env.result_icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for ${{ env.resolution }}>\n${{ env.result_icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for ${{ env.resolution }}>\n"
                   }
                 }
               ]
