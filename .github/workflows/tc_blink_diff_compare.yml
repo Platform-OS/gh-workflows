@@ -118,9 +118,9 @@ jobs:
       matrix:
         resolution: ["desktop", "mobile"]
     outputs:
-      desktop-diff-conclusion: ${{ steps.set-conclusion.desktop-conclusion }}
+      desktop-diff-conclusion: ${{ steps.set-conclusion.outputs.desktop-conclusion }}
       desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
-      mobile-diff-conclusion: ${{ steps.diff-test.outputs.mobile-diff-conclusion }}
+      mobile-diff-conclusion: ${{ steps.set-conclusion.outputs.mobile-conclusion }}
       mobile-diff-report-url: ${{ steps.diff-test.outputs.mobile-diff-report-url }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
