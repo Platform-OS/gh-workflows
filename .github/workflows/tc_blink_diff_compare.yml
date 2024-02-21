@@ -219,7 +219,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                      "text": "${{ env.result_icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.result_icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
+                      "text": "${{ desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
                   }
                 }
               ]
