@@ -230,8 +230,8 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-          desktop-result-icon: ${{ needs.compare.steps.diff-test.desktop-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
-          mobile-result-icon: ${{ needs.compare.steps.diff-test.mobile-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          desktop-result-icon: ${{ needs.compare.outputs.desktop-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          mobile-result-icon: ${{ needs.compare.outputs.mobile-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
 
   cleanup:
     if: ${{ always() }}
