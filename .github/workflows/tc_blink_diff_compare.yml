@@ -118,9 +118,9 @@ jobs:
       matrix:
         resolution: ["desktop", "mobile"]
     outputs:
-      desktop-diff-conclusion: ${{ steps.set-conclusion.outputs.desktop-conclusion }}
+      desktop-diff-conclusion: ${{ steps.diff-test.outputs.desktop-diff-conclusion }}
       desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
-      mobile-diff-conclusion: ${{ steps.set-conclusion.outputs.mobile-conclusion }}
+      mobile-diff-conclusion: ${{ steps.diff-test.outputs.mobile-diff-conclusion }}
       mobile-diff-report-url: ${{ steps.diff-test.outputs.mobile-diff-report-url }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
@@ -139,7 +139,7 @@ jobs:
           npm install --prefix tests
         shell: sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff@20b07670161d5a36b0a9262ebe17490fd7e7d764
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@62060a4b0c66bea38f8e6569407c6133609a4d01
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         id: diff-test
         if: success() || failure()
@@ -149,12 +149,6 @@ jobs:
           base: release_candidate
         env:
           resolution: ${{ matrix.resolution }}
-
-      - name: Set conclusion result for the compare screenshot step
-        id: set-conclusion
-        run:
-          set -eu
-          echo "${{ matrix.resolution }}-conclusion=${{ steps.diff-test.conclusion }}" >> $GITHUB_OUTPUT
 
   notify:
     needs: ["reserve-ci-instance", "deploy", "compare"]
