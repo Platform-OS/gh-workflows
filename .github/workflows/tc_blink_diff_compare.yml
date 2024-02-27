@@ -152,6 +152,7 @@ jobs:
 
   notify:
     needs: ["reserve-ci-instance", "deploy", "compare"]
+    if: ${{ success() || failure() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -164,7 +165,6 @@ jobs:
 
       - name: Send notification to Slack
         id: notify-slack
-        if: success() || failure()
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
