@@ -81,6 +81,7 @@ jobs:
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff@7149159f4bdbe6a32216683703a2883e445a0614
         name: Compare screenshots for ${{ matrix.resolution }} resolution
+        id: diff-test
         if: success() || failure()
         with:
           base: master
