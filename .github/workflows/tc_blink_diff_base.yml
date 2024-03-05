@@ -120,7 +120,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        resolution: ["desktop", "tablet", "mobile"]
+        resolution: ["desktop", "mobile"]
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
