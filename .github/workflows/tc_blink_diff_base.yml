@@ -115,7 +115,7 @@ jobs:
   capture:
     needs: ["reserve-ci-instance","deploy"]
     runs-on: ubuntu-latest
-    container: platformos/testcafe:4.17.0-3.5.0
+    container: platformos/testcafe-chrome:4.17.0-3.5.0
     timeout-minutes: 35
     strategy:
       max-parallel: 1
