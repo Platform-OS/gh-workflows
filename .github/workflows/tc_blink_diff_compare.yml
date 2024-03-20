@@ -20,7 +20,7 @@ jobs:
   #        do_not_skip: '["push"]'
 
   reserve-ci-instance:
-    needs: pre_job
+    #needs: pre_job
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     container: alpine:3.15
