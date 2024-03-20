@@ -111,8 +111,10 @@ jobs:
   compare:
     needs: ["reserve-ci-instance", "deploy"]
     runs-on: ubuntu-latest
-    container: platformos/testcafe-chrome:4.17.0-3.5.0
-    timeout-minutes: 35
+    container:
+      image: platformos/testcafe-chrome:4.17.0-3.5.0
+      options: --cpus 2
+    timeout-minutes: 20
     strategy:
       max-parallel: 1
       matrix:
