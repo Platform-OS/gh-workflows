@@ -2,6 +2,11 @@ name: Compare screenshots
 
 on:
   workflow_call:
+    inputs:
+      docker_image_for_compare:
+        description: "Docker image to be used when running the compare job"
+        required: true
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -111,7 +116,7 @@ jobs:
   compare:
     needs: ["reserve-ci-instance", "deploy"]
     runs-on: ubuntu-latest
-    container: ${{ env.docker_image_for_compare }}
+    container: ${{ inputs.docker_image_for_compare }}
     timeout-minutes: 20
     strategy:
       max-parallel: 1
