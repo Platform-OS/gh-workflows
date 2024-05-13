@@ -151,7 +151,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: download-base-screenshots
-          download-path: ./tests/visual-tests/snapshots/${{ matrix.resolution }}
+          path: ./tests/visual-tests/snapshots/${{ matrix.resolution }}
+          pattern: base-screenshots-${{ matrix.resolution }}-*.tar.gz
           github-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
           repository: ${{ inputs.repository }}
           run-id: 9068302919
