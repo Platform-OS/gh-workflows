@@ -52,6 +52,8 @@ jobs:
       CI: false
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       DEBUG: 1
+    outputs:
+      timestamp: ${{ steps.set-timestamp.outputs.TIMESTAMP }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -112,6 +114,11 @@ jobs:
 
           sh ./tests/seed.sh
 
+      - name: Set timestamp for capture artifacts
+        id: set-timestamp
+        shell: sh
+        run: echo "TIMESTAMP=$(date '+%y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
   capture:
     needs: ["reserve-ci-instance","deploy"]
     runs-on: ubuntu-latest
@@ -126,6 +133,7 @@ jobs:
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
       CI: true
+      TIMESTAMP: ${{ needs.deploy.outputs.timestamp }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -141,11 +149,11 @@ jobs:
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
         if: success() || failure()
         with:
-          npm-prefix: tests
-          test-name: tc-${{ matrix.resolution }}-snapshots-capture
           base: ${{ inputs.base-branch-for-capturing }}
-        env:
+          npm-prefix: tests
           resolution: ${{ matrix.resolution }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-capture
+          timestamp: ${{ env.TIMESTAMP }}
 
   cleanup:
     if: ${{ always() }}
