@@ -141,7 +141,6 @@ jobs:
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
         if: success() || failure()
         with:
-          npm-prefix: tests
           test-name: tc-${{ matrix.resolution }}-snapshots-capture
           base: ${{ inputs.base-branch-for-capturing }} 
         env:
