@@ -3,7 +3,7 @@ name: Compare screenshots
 on:
   workflow_call:
     inputs:
-      action_repository:
+      repository:
         description: Repository to get base screenshots from
         required: true
         type: string
