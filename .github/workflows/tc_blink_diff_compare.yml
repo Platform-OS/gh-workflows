@@ -151,9 +151,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: download-base-screenshots
-          download-path: ./tests/visual-tests/snapshots/${{ env.resolution }}
+          download-path: ./tests/visual-tests/snapshots/${{ matrix.resolution }}
           github-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
-          repository: ${{ inputs.action_repository }}
+          repository: ${{ inputs.repository }}
           run-id: 9068302919
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
@@ -164,7 +164,6 @@ jobs:
           npm-prefix: tests
           test-name: tc-${{ matrix.resolution }}-snapshots-diff
           base: release_candidate
-        env:
           resolution: ${{ matrix.resolution }}
 
   notify:
