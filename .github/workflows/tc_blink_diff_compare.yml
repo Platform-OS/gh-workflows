@@ -10,19 +10,19 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  #pre_job:
-  #  # continue-on-error: true # Uncomment once integration is finished
-  #  runs-on: ubuntu-latest
-  #  # Map a step output to a job output
-  #  outputs:
-  #    should_skip: ${{ steps.skip_check.outputs.should_skip }}
-  #  steps:
-  #    - id: skip_check
-  #      uses: fkirc/skip-duplicate-actions@master
-  #      with:
-  #        github_token: ${{ github.token }}
-  #        paths_ignore: '["**/README.md"]'
-  #        do_not_skip: '["push"]'
+  pre_job:
+    # continue-on-error: true # Uncomment once integration is finished
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          github_token: ${{ github.token }}
+          paths_ignore: '["**/README.md"]'
+          do_not_skip: '["push"]'
 
   reserve-ci-instance:
     #needs: pre_job
@@ -144,7 +144,7 @@ jobs:
           npm install --prefix tests
         shell: sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff@60b8cc2ca6b96359e6ada0c8140eff81136dcd5c
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         id: diff-test
         if: success() || failure()
