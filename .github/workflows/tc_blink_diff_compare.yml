@@ -3,8 +3,12 @@ name: Compare screenshots
 on:
   workflow_call:
     inputs:
+      action_repository:
+        description: Repository to get base screenshots from
+        required: true
+        type: string
       docker_image_for_compare:
-        description: "Docker image to be used when running the compare job"
+        description: Docker image to be used when running the compare job
         required: true
         type: string
 
@@ -143,6 +147,14 @@ jobs:
         run: |
           npm install --prefix tests
         shell: sh
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: download-base-screenshots
+          download-path: ./tests/visual-tests/snapshots/${{ env.resolution }}
+          github-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
+          repository: ${{ inputs.action_repository }}
+          run-id: 9068302919
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
         name: Compare screenshots for ${{ matrix.resolution }} resolution
