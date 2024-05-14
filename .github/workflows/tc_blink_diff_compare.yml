@@ -29,7 +29,7 @@ jobs:
           do_not_skip: '["push"]'
 
   reserve-ci-instance:
-    #needs: pre_job
+    needs: pre_job
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     container: alpine:3.15
@@ -151,7 +151,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: ./tests/visual-tests/snapshots/${{ matrix.resolution }}
-          pattern: base-screenshots-${{ matrix.resolution }}-*.tar.gz
+          pattern: base-${{ matrix.resolution }}-snapshots-*.tar.gz
           github-token: ${{ github.token }}
           repository: ${{ inputs.repository }}
           run-id: 9068302919
@@ -160,10 +160,10 @@ jobs:
         if: success()
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         with:
-          npm-prefix: tests
-          test-name: tc-${{ matrix.resolution }}-snapshots-diff
           base: release_candidate
+          npm-prefix: tests
           resolution: ${{ matrix.resolution }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-diff
 
   notify:
     needs: ["reserve-ci-instance", "deploy", "compare"]
