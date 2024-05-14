@@ -157,8 +157,9 @@ jobs:
           run-id: 9068302919
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
-        if: success()
         name: Compare screenshots for ${{ matrix.resolution }} resolution
+        id: diff-test
+        if: success()
         with:
           base: release_candidate
           npm-prefix: tests
