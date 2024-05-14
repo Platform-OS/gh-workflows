@@ -153,7 +153,7 @@ jobs:
           name: download-base-screenshots
           path: ./tests/visual-tests/snapshots/${{ matrix.resolution }}
           pattern: base-screenshots-${{ matrix.resolution }}-*.tar.gz
-          github-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
+          github-token: ${{ github.token }}
           repository: ${{ inputs.repository }}
           run-id: 9068302919
 
