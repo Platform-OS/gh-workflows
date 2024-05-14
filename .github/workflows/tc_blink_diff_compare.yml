@@ -151,7 +151,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: ./tests/visual-tests/snapshots/${{ matrix.resolution }}
-          pattern: base-${{ matrix.resolution }}-snapshots-*.tar.gz
+          pattern: base-${{ matrix.resolution }}-snapshots-*
           github-token: ${{ github.token }}
           repository: ${{ inputs.repository }}
           run-id: 9068302919
