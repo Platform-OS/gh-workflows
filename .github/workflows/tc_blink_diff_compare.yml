@@ -159,7 +159,6 @@ jobs:
       - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
         if: success()
         name: Compare screenshots for ${{ matrix.resolution }} resolution
-        if: success() || failure()
         with:
           npm-prefix: tests
           test-name: tc-${{ matrix.resolution }}-snapshots-diff
