@@ -150,7 +150,6 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: download-base-screenshots
           path: ./tests/visual-tests/snapshots/${{ matrix.resolution }}
           pattern: base-screenshots-${{ matrix.resolution }}-*.tar.gz
           github-token: ${{ github.token }}
@@ -158,8 +157,8 @@ jobs:
           run-id: 9068302919
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
+        if: success()
         name: Compare screenshots for ${{ matrix.resolution }} resolution
-        id: diff-test
         if: success() || failure()
         with:
           npm-prefix: tests
