@@ -114,11 +114,6 @@ jobs:
 
           sh ./tests/seed.sh
 
-      - name: Set timestamp for capture artifacts
-        id: set-timestamp
-        shell: sh
-        run: echo "TIMESTAMP=$(date '+%y%m%d%H%M%S')" >> $GITHUB_OUTPUT
-
   capture:
     needs: ["reserve-ci-instance","deploy"]
     runs-on: ubuntu-latest
@@ -133,7 +128,6 @@ jobs:
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
       CI: true
-      TIMESTAMP: ${{ needs.deploy.outputs.timestamp }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -153,7 +147,6 @@ jobs:
           npm-prefix: tests
           resolution: ${{ matrix.resolution }}
           test-name: tc-${{ matrix.resolution }}-snapshots-capture
-          timestamp: ${{ env.TIMESTAMP }}
 
   cleanup:
     if: ${{ always() }}
