@@ -151,12 +151,12 @@ jobs:
       - name: Get id of a workflow with screenshot artifacts
         id: get-run-id
         run: |
-          ARTIFACT_SOURCE_RUN_ID=$(curl -L \
+          ARTIFACT_RUN_ID=$(curl -L \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${{ github.token }}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
-          https://api.github.com/repos/Platform-OS/gh-action-run-tc-blink-diff/environments/artifacts/variables/ARTIFACT_SOURCE_RUN_ID)
-          echo $ARTIFACT_SOURCE_RUN_ID
+          https://api.github.com/repos/"${{ github.repository }}"/environments/artifacts/variables/ARTIFACT_RUN_ID)
+          echo $ARTIFACT_RUN_ID
 
       - uses: actions/download-artifact@v4
         if: success()
