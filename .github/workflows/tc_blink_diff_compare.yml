@@ -155,6 +155,7 @@ jobs:
           pattern: ${{ matrix.resolution }}
           github-token: ${{ github.token }}
           repository: ${{ inputs.repository }}
+          run-id: ${{ vars.ARTIFACT_WORKFLOW_RUN_ID }}
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
         name: Compare screenshots for ${{ matrix.resolution }} resolution
