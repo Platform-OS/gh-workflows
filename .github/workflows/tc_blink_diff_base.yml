@@ -52,8 +52,6 @@ jobs:
       CI: false
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       DEBUG: 1
-    outputs:
-      timestamp: ${{ steps.set-timestamp.outputs.TIMESTAMP }}
     steps:
       - uses: actions/checkout@v3
         with:
