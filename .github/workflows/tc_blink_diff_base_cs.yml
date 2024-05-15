@@ -48,7 +48,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        resolution: ["desktop", "tablet", "mobile"]
+        resolution: ["desktop", "mobile"]
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
@@ -77,10 +77,9 @@ jobs:
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
         if: success() || failure()
         with:
-          test-name: tc-${{ matrix.resolution }}-snapshots-capture
           base: ${{ inputs.base-branch-for-capturing }}
-        env:
           resolution: ${{ matrix.resolution }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-capture
 
   cleanup:
     if: ${{ always() }}
