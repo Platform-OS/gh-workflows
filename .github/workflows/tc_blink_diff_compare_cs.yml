@@ -3,6 +3,14 @@ name: Compare screenshots
 on:
   workflow_call:
     inputs:
+      repository:
+        description: Repository to get base screenshots from
+        required: true
+        type: string
+      docker_image_for_compare:
+        description: Docker image to be used when running the compare job
+        required: true
+        type: string
       project-name:
         required: false
         type: string
@@ -43,7 +51,7 @@ jobs:
   compare:
     needs: ["reserve-ci-instance"]
     runs-on: ubuntu-latest
-    container: platformos/testcafe:4.7.2-2.1.0
+    container: ${{ inputs.docker_image_for_compare }}
     timeout-minutes: 35
     strategy:
       max-parallel: 1
@@ -79,17 +87,23 @@ jobs:
          set -e
          sh seed/seed.sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff@7149159f4bdbe6a32216683703a2883e445a0614
+      - uses: actions/download-artifact@v4
+        if: success()
+        with:
+          path: ./tests/visual-tests/snapshots/
+          pattern: ${{ matrix.resolution }}
+          github-token: ${{ github.token }}
+          repository: ${{ inputs.repository }}
+          run-id: ${{ vars.ARTIFACT_WORKFLOW_RUN_ID }}
+
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         id: diff-test
         if: success() || failure()
         with:
           base: master
-          project-name: ${{ inputs.project-name }}
-          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          test-name: tc-${{ matrix.resolution }}-snapshots-diff
-        env:
           resolution: ${{ matrix.resolution }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-diff
 
   notify:
     needs: ["reserve-ci-instance", "compare"]
