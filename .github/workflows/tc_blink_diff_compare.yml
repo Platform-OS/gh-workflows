@@ -166,82 +166,82 @@ jobs:
           resolution: ${{ matrix.resolution }}
           test-name: tc-${{ matrix.resolution }}-snapshots-diff
 
-  #notify:
-  #  needs: ["reserve-ci-instance", "deploy", "compare"]
-  #  if: ${{ success() || failure() }}
-  #  runs-on: ubuntu-latest
-  #  timeout-minutes: 5
-  #  env:
-  #    CI: true
-  #    MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
-  #    MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
-  #    MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
-  #    UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
-  #  steps:
+  notify:
+    needs: ["reserve-ci-instance", "deploy", "compare"]
+    if: ${{ success() || failure() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CI: true
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+      UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
+    steps:
 
-  #    - name: Send notification to Slack
-  #      id: notify-slack
-  #      uses: slackapi/slack-github-action@v1.24.0
-  #      with:
-  #        payload: |
-  #          {
-  #            "channel": "test-reports",
-  #            "text": "Visual regression tests",
-  #            "blocks": [
-  #              {
-  #                "type": "header",
-  #                "text": {
-  #                  "type": "plain_text",
-  #                  "text": "testcafe blink diff visual regression tests"
-  #                }
-  #              },
-  #              {
-  #                "type": "section",
-  #                "fields": [
-  #                  {
-  #                    "type": "mrkdwn",
-  #                    "text": "*Repository:*\n${{ github.repository }}"
-  #                  },
-  #                  {
-  #                    "type": "mrkdwn",
-  #                    "text": "*Branch:*\n${{ github.ref_name }}"
-  #                  }
-  #                ]
-  #              },
-  #              {
-  #                "type": "section",
-  #                "fields": [
-  #                  {
-  #                    "type": "mrkdwn",
-  #                    "text": "*Commit:*\n<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
-  #                  },
-  #                  {
-  #                    "type": "mrkdwn",
-  #                    "text": "*Actor:*\n${{ github.actor }}\n"
-  #                  }
-  #                ]
-  #              },
-  #              {
-  #                "type": "section",
-  #                "text": {
-  #                  "type": "mrkdwn",
-  #                  "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View action run>"
-  #                }
-  #              },
-  #              {
-  #                "type": "section",
-  #                "text": {
-  #                  "type": "mrkdwn",
-  #                    "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
-  #                }
-  #              }
-  #            ]
-  #          }
-  #      env:
-  #        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  #        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-  #        desktop-result-icon: ${{ needs.compare.outputs.desktop-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
-  #        mobile-result-icon: ${{ needs.compare.outputs.mobile-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+      - name: Send notification to Slack
+        id: notify-slack
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "channel": "test-reports",
+              "text": "Visual regression tests",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "testcafe blink diff visual regression tests"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Actor:*\n${{ github.actor }}\n"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View action run>"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                      "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          desktop-result-icon: ${{ needs.compare.outputs.desktop-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          mobile-result-icon: ${{ needs.compare.outputs.mobile-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
 
   cleanup:
     if: ${{ always() }}
