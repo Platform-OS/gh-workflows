@@ -73,7 +73,7 @@ jobs:
          set -e
          sh seed/seed.sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@0.0.2
+      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
         if: success() || failure()
         with:
