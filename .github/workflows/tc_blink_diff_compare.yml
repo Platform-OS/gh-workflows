@@ -148,15 +148,15 @@ jobs:
           npm install --prefix tests
         shell: sh
 
-      - name: Get id of a workflow with screenshot artifacts
-        id: get-run-id
-        run: |
-          ARTIFACT_RUN_ID=$(curl -L \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/${{ github.repository }}/actions/artifacts/1501463342)
-          echo $ARTIFACT_RUN_ID >> $GITHUB_OUTPUT
+      #- name: Get id of a workflow with screenshot artifacts
+      #  id: get-run-id
+      #  run: |
+      #    ARTIFACT_RUN_ID=$(curl -L \
+      #      -H "Accept: application/vnd.github+json" \
+      #      -H "Authorization: Bearer ${{ github.token }}" \
+      #      -H "X-GitHub-Api-Version: 2022-11-28" \
+      #      https://api.github.com/repos/${{ github.repository }}/actions/variables/ARTIFACT_RUN_ID)
+      #    echo $ARTIFACT_RUN_ID >> $GITHUB_OUTPUT
 
       - uses: actions/download-artifact@v4
         if: success()
@@ -165,7 +165,7 @@ jobs:
           pattern: ${{ matrix.resolution }}
           github-token: ${{ github.token }}
           repository: ${{ inputs.repository }}
-          run-id: ${{ steps.get-run-id.outputs.ARTIFACT_SOURCE_RUN_ID }}
+          run-id: ${{ vars.ARTIFACT_SOURCE_RUN_ID }}
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
         name: Compare screenshots for ${{ matrix.resolution }} resolution
