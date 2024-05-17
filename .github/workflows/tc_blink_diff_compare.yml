@@ -58,7 +58,7 @@ jobs:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       DEBUG: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
@@ -138,7 +138,7 @@ jobs:
       UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
       CI: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
