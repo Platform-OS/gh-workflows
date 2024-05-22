@@ -52,7 +52,7 @@ jobs:
     needs: ["reserve-ci-instance"]
     #if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
-    container: alpine:3.15
+    container: ${{ inputs.docker_image_for_compare }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
