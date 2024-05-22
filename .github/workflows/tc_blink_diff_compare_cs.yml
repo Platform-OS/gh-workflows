@@ -80,7 +80,7 @@ jobs:
          sh seed/seed.sh
 
   compare:
-    needs: ["reserve-ci-instance"]
+    needs: ["reserve-ci-instance", "deploy"]
     runs-on: ubuntu-latest
     #if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     container: ${{ inputs.docker_image_for_compare }}
@@ -125,7 +125,7 @@ jobs:
           test-name: tc-${{ matrix.resolution }}-snapshots-diff
 
   notify:
-    needs: ["reserve-ci-instance", "compare"]
+    needs: ["reserve-ci-instance", "deploy", "compare"]
     if: ${{ success() || failure() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5

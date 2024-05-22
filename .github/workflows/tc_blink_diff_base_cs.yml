@@ -59,7 +59,7 @@ jobs:
          sh seed/seed.sh
 
   capture:
-    needs: ["reserve-ci-instance"]
+    needs: ["reserve-ci-instance", "deploy"]
     runs-on: ubuntu-latest
     container: ${{ inputs.docker-image-for-capture }}
     timeout-minutes: 35
@@ -88,7 +88,7 @@ jobs:
 
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance","capture"]
+    needs: ["reserve-ci-instance", "deploy", "capture"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
