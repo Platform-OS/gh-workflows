@@ -7,6 +7,7 @@ on:
         description: 'MPKIT URL'
         required: true
         default: ''
+        type: string
 
 jobs:
   build-and-deploy:
