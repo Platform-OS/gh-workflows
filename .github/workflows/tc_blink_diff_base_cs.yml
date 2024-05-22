@@ -43,7 +43,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
 
       - name: Build
         shell: sh
@@ -76,7 +75,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          submodules: true
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
