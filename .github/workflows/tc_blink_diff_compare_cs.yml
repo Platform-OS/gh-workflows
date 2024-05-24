@@ -100,6 +100,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install test dependencies
+        shell: sh
+        run: |
+          set -eu
+          npm install
+
       - uses: actions/download-artifact@v4
         if: success()
         with:
