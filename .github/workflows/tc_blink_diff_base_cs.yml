@@ -41,8 +41,6 @@ jobs:
       DEBUG: 1
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Build
         shell: sh
@@ -72,9 +70,13 @@ jobs:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
       CI: true
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        shell: sh
+        run: |
+          set -eu
+          npm install
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
