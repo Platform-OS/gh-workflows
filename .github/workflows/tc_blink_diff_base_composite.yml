@@ -33,7 +33,7 @@ jobs:
 
   call-build-and-deploy:
     needs: ["reserve-ci-instance"]
-    uses: ./.github/workflows/${{ github.event.inputs.workflow_for_deployment }}.yml
+    uses: ${{ inputs.workflow_for_deployment }}
     secrets: inherit
     with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
