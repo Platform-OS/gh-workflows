@@ -6,7 +6,7 @@ on:
       base-branch-for-capturing:
         required: true
         type: string
-      deploy_workflow_file:
+      workflow_for_deployment:
         description: 'Name of the workflow file to be called for deployment of the application'
         required: true
         type: string
