@@ -6,10 +6,6 @@ on:
       base-branch-for-capturing:
         required: true
         type: string
-      workflow_for_deployment:
-        description: 'Name of the workflow file to be called for deployment of the application'
-        required: true
-        type: string
       docker-image-for-capture:
         description: 'Docker image to be used when capturing screenshots'
         required: true
