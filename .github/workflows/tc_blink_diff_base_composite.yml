@@ -33,7 +33,7 @@ jobs:
 
   call-build-and-deploy:
     needs: ["reserve-ci-instance"]
-    uses: ${{ inputs.workflow_for_deployment }}
+    uses: ${{ inputs.workflow_for_deployment }}@gh-artifacts
     secrets: inherit
     with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
