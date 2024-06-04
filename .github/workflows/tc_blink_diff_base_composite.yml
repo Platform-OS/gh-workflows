@@ -49,6 +49,8 @@ jobs:
           node-version: 16
 
       - name: Deploy apps
+        env:
+          CI: true
         run: sh ./scripts/build_and_deploy.sh
         shell: sh
 
