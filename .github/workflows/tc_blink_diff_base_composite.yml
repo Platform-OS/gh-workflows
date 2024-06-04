@@ -43,20 +43,8 @@ jobs:
     with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
-  #get-build-and-deploy-workflow-status:
-  #  runs-on: ubuntu-latest
-  #  if: ${{ always() }}
-  #  needs: ["call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
-  #  steps:
-  #    - name: Get status
-  #      id: get-status
-  #      run: |
-  #        echo "deployment_status: ${{ needs.call-build-and-deploy-workflow-for-dcra-projects.outputs.deployment_status }}"
-  #        echo "deployment_status_markt: ${{ needs.call-build-and-deploy-workflow-for-dcra-marketplace.outputs.deployment_status }}"
-  #      shell: sh
-
   capture:
-    needs: ["reserve-ci-instance", "get-build-and-deploy-workflow-status"]
+    needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
     if: ${{ needs.get-build-and-deploy-workflow-status.outputs.deployment_status == 'success' || needs.get-build-and-deploy-workflow-status.outputs.deployment_status_markt == 'success' }}
     runs-on: ubuntu-latest
     container: ${{ inputs.docker-image-for-capture }}
