@@ -28,6 +28,7 @@ jobs:
           pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
 
   build-and-deploy:
+    needs: ["reserve-ci-instance"]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
