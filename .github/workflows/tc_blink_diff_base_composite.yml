@@ -43,44 +43,54 @@ jobs:
     with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
-  capture:
-    needs: ["reserve-ci-instance", "deploy"]
-    if: success()
+  get-build-and-deploy-workflow-status:
     runs-on: ubuntu-latest
-    container: ${{ inputs.docker-image-for-capture }}
-    timeout-minutes: 35
-    strategy:
-      max-parallel: 1
-      matrix:
-        resolution: ["desktop", "mobile"]
-    env:
-      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
-      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
-      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
-      CI: true
+    needs: ["call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: true
-
-      - name: Install test dependencies
+      - name: Get status
+        id: get-status
         run: |
-          npm install --prefix tests
+          echo "deployment_status: ${{ needs.call-build-and-deploy-workflow-for-dcra-projects.outputs.deployment_status }}"
+          echo "deployment_status_markt: ${{ needs.call-build-and-deploy-workflow-for-dcra-marketplace.outputs.deployment_status }}"
         shell: sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
-        name: Capture base screenshots for ${{ matrix.resolution }} resolution
-        if: success() || failure()
-        with:
-          base: ${{ inputs.base-branch-for-capturing }}
-          npm-prefix: tests
-          resolution: ${{ matrix.resolution }}
-          test-name: tc-${{ matrix.resolution }}-snapshots-capture
+  #  capture:
+  #    needs: ["reserve-ci-instance", "get-build-and-deploy-workflow-status"]
+  #    runs-on: ubuntu-latest
+  #    container: ${{ inputs.docker-image-for-capture }}
+  #    timeout-minutes: 35
+  #    strategy:
+  #      max-parallel: 1
+  #      matrix:
+  #        resolution: ["desktop", "mobile"]
+  #    env:
+  #      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+  #      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+  #      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+  #      CI: true
+  #    steps:
+  #      - uses: actions/checkout@v3
+  #        with:
+  #          fetch-depth: 0
+  #          submodules: true
+  #
+  #      - name: Install test dependencies
+  #        run: |
+  #          npm install --prefix tests
+  #        shell: sh
+  #
+  #      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
+  #        name: Capture base screenshots for ${{ matrix.resolution }} resolution
+  #        if: success() || failure()
+  #        with:
+  #          base: ${{ inputs.base-branch-for-capturing }}
+  #          npm-prefix: tests
+  #          resolution: ${{ matrix.resolution }}
+  #          test-name: tc-${{ matrix.resolution }}-snapshots-capture
 
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance","deploy","capture"]
+    needs: ["reserve-ci-instance", "capture"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
