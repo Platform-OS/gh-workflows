@@ -45,6 +45,7 @@ jobs:
 
   get-build-and-deploy-workflow-status:
     runs-on: ubuntu-latest
+    if: ${{ always() }}
     needs: ["call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
     steps:
       - name: Get status
