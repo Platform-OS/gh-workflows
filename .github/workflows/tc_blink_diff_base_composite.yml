@@ -49,7 +49,7 @@ jobs:
           node-version: 16
 
       - name: Deploy apps
-        run: ./scripts/build_and_deploy.sh
+        run: sh ./scripts/build_and_deploy.sh
         shell: sh
 
   capture:
