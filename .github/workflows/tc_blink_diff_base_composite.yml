@@ -27,35 +27,33 @@ jobs:
           method: reserve
           pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
 
-  build-and-deploy:
+  call-build-and-deploy-workflow-for-dcra-projects:
+    if: ${{ github.repository != 'Platform-OS/marketplace-dcra' }}
+    needs: ["reserve-ci-instance"]
+    uses: ./.github/workflows/deploy_dcra_market.yml
+    secrets: inherit
+    with:
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+
+  call-build-and-deploy-workflow-for-dcra-marketplace:
+    if: ${{ github.repository == 'Platform-OS/marketplace-dcra' }}
+    needs: ["reserve-ci-instance"]
+    uses: ./.github/workflows/deploy_dcra_market.yml
+    secrets: inherit
+    with:
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+
+  fail-job-if-deployment-not-successful:
+    if: ${{ needs.call-build-and-deploy-workflow-for-dcra-projects.outputs.deployment_status != 'success' && needs.call-build-and-deploy-workflow-for-dcra-marketplace.outputs.deployment_status == 'success' }}
     needs: ["reserve-ci-instance"]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
-      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
-      MPKIT_URL: ${{ inputs.MPKIT_URL }}
-      CI: false
-      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-      DEBUG: 1
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: true
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Deploy apps
-        env:
-          CI: true
-        run: sh ./scripts/build_and_deploy.sh
-        shell: sh
+      - name: Fail job
+        run: |
+          echo "::setFailed::Deployment failed"
 
   capture:
-    needs: ["reserve-ci-instance", "build-and-deploy"]
+    needs: ["reserve-ci-instance", "fail-job-if-deployment-not-successful"]
     runs-on: ubuntu-latest
     container: ${{ inputs.docker-image-for-capture }}
     timeout-minutes: 35
