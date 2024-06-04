@@ -45,7 +45,7 @@ jobs:
 
   capture:
     needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
-    if: ${{ needs.get-build-and-deploy-workflow-status.outputs.deployment_status == 'success' || needs.get-build-and-deploy-workflow-status.outputs.deployment_status_markt == 'success' }}
+    if: ${{ needs.call-build-and-deploy-workflow-for-dcra-projects.outputs.deployment_status == 'success' || needs.call-build-and-deploy-workflow-for-dcra-marketplace.outputs.deployment_status == 'success' }}
     runs-on: ubuntu-latest
     container: ${{ inputs.docker-image-for-capture }}
     timeout-minutes: 35
