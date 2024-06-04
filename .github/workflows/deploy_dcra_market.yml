@@ -9,7 +9,9 @@ on:
         default: ''
         type: string
     outputs:
-      deployment_status: ${{ jobs.build-and-deploy.outputs.deployment_status }}
+      deployment_status:
+        description: 'App deployment status'
+        value: ${{ jobs.build-and-deploy.outputs.deployment_status }}
 
 jobs:
   build-and-deploy:
