@@ -142,5 +142,6 @@ jobs:
       - name: Get Deployment Status
         id: get-deployment-status
         run: |
-          echo "DEPLOYMENT_STATUS=${{ job.status }}" >> $GITHUB_OUTPUT
+          #echo "DEPLOYMENT_STATUS=${{ job.status }}" >> $GITHUB_OUTPUT
+          echo "DEPLOYMENT_STATUS=failure" >> $GITHUB_OUTPUT
         shell: sh
