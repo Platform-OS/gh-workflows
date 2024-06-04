@@ -28,70 +28,71 @@ jobs:
           pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
 
   call-build-and-deploy-workflow-for-dcra-projects:
-    needs: ["reserve-ci-instance"]
     if: ${{ github.repository != 'Platform-OS/marketplace-dcra' }}
+    needs: ["reserve-ci-instance"]
     uses: ./.github/workflows/deploy_dcra_market.yml
     secrets: inherit
     with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
   call-build-and-deploy-workflow-for-dcra-marketplace:
-    needs: ["reserve-ci-instance"]
     if: ${{ github.repository == 'Platform-OS/marketplace-dcra' }}
+    needs: ["reserve-ci-instance"]
     uses: ./.github/workflows/deploy_dcra_market.yml
     secrets: inherit
     with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
-  get-build-and-deploy-workflow-status:
+  #get-build-and-deploy-workflow-status:
+  #  runs-on: ubuntu-latest
+  #  if: ${{ always() }}
+  #  needs: ["call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
+  #  steps:
+  #    - name: Get status
+  #      id: get-status
+  #      run: |
+  #        echo "deployment_status: ${{ needs.call-build-and-deploy-workflow-for-dcra-projects.outputs.deployment_status }}"
+  #        echo "deployment_status_markt: ${{ needs.call-build-and-deploy-workflow-for-dcra-marketplace.outputs.deployment_status }}"
+  #      shell: sh
+
+  capture:
+    needs: ["reserve-ci-instance", "get-build-and-deploy-workflow-status"]
+    if: ${{ needs.get-build-and-deploy-workflow-status.outputs.deployment_status == 'success' || needs.get-build-and-deploy-workflow-status.outputs.deployment_status_markt == 'success' }}
     runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs: ["call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
+    container: ${{ inputs.docker-image-for-capture }}
+    timeout-minutes: 35
+    strategy:
+      max-parallel: 1
+      matrix:
+        resolution: ["desktop", "mobile"]
+    env:
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+      CI: true
     steps:
-      - name: Get status
-        id: get-status
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Install test dependencies
         run: |
-          echo "deployment_status: ${{ needs.call-build-and-deploy-workflow-for-dcra-projects.outputs.deployment_status }}"
-          echo "deployment_status_markt: ${{ needs.call-build-and-deploy-workflow-for-dcra-marketplace.outputs.deployment_status }}"
+          npm install --prefix tests
         shell: sh
 
-  #  capture:
-  #    needs: ["reserve-ci-instance", "get-build-and-deploy-workflow-status"]
-  #    runs-on: ubuntu-latest
-  #    container: ${{ inputs.docker-image-for-capture }}
-  #    timeout-minutes: 35
-  #    strategy:
-  #      max-parallel: 1
-  #      matrix:
-  #        resolution: ["desktop", "mobile"]
-  #    env:
-  #      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
-  #      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
-  #      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
-  #      CI: true
-  #    steps:
-  #      - uses: actions/checkout@v3
-  #        with:
-  #          fetch-depth: 0
-  #          submodules: true
-  #
-  #      - name: Install test dependencies
-  #        run: |
-  #          npm install --prefix tests
-  #        shell: sh
-  #
-  #      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
-  #        name: Capture base screenshots for ${{ matrix.resolution }} resolution
-  #        if: success() || failure()
-  #        with:
-  #          base: ${{ inputs.base-branch-for-capturing }}
-  #          npm-prefix: tests
-  #          resolution: ${{ matrix.resolution }}
-  #          test-name: tc-${{ matrix.resolution }}-snapshots-capture
+      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
+        name: Capture base screenshots for ${{ matrix.resolution }} resolution
+        if: success() || failure()
+        with:
+          base: ${{ inputs.base-branch-for-capturing }}
+          npm-prefix: tests
+          resolution: ${{ matrix.resolution }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-capture
 
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance", "get-build-and-deploy-workflow-status"]
+    needs: ["reserve-ci-instance", "capture"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
