@@ -45,7 +45,7 @@ jobs:
 
   capture:
     needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-marketplace"]
-    if: ${{ success() }}
+    if: ${{ always() && !cancelled() && !failure() }}
     runs-on: ubuntu-latest
     container: ${{ inputs.docker-image-for-capture }}
     timeout-minutes: 35
@@ -80,7 +80,7 @@ jobs:
 
   cleanup:
     needs: ["reserve-ci-instance", "capture"]
-    if: ${{ always() && !cancelled() && !failure() }}
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
