@@ -8,10 +8,6 @@ on:
         required: true
         default: ''
         type: string
-    outputs:
-      deployment_status:
-        description: 'App deployment status'
-        value: ${{ jobs.build-and-deploy.outputs.deployment_status }}
 
 jobs:
   build-and-deploy:
@@ -24,8 +20,6 @@ jobs:
       CI: false
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       DEBUG: 1
-    outputs:
-      deployment_status: ${{ steps.get-deployment-status.outputs.DEPLOYMENT_STATUS }}
     steps:
       - uses: actions/checkout@v3
         with:
