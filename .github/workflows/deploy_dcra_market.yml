@@ -144,5 +144,6 @@ jobs:
         run: |
           #echo "DEPLOYMENT_STATUS=${{ job.status }}" >> $GITHUB_OUTPUT
           #echo "DEPLOYMENT_STATUS=success" >> $GITHUB_OUTPUT
-          runNonExistantCommandToTestIfItFails
+          #runNonExistantCommandToTestIfItFails
+          pwd
         shell: sh
