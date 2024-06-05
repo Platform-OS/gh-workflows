@@ -27,13 +27,13 @@ jobs:
           method: reserve
           pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
 
-  call-build-and-deploy-workflow-for-dcra-projects:
-    if: ${{ github.repository != 'Platform-OS/marketplace-dcra' }}
-    needs: ["reserve-ci-instance"]
-    uses: ./.github/workflows/deploy_dcra_market.yml
-    secrets: inherit
-    with:
-      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+  #call-build-and-deploy-workflow-for-dcra-projects:
+  #  if: ${{ github.repository != 'Platform-OS/marketplace-dcra' }}
+  #  needs: ["reserve-ci-instance"]
+  #  uses: ./.github/workflows/deploy_dcra_market.yml
+  #  secrets: inherit
+  #  with:
+  #    MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
   call-build-and-deploy-workflow-for-dcra-marketplace:
     if: ${{ github.repository == 'Platform-OS/marketplace-dcra' }}
@@ -71,7 +71,7 @@ jobs:
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
-        if: success() || failure()
+        if: success()
         with:
           base: ${{ inputs.base-branch-for-capturing }}
           npm-prefix: tests
