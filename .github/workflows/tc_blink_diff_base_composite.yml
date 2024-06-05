@@ -43,17 +43,8 @@ jobs:
     with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
-  fail-job-if-deployment-not-successful:
-    if: ${{ needs.call-build-and-deploy-workflow-for-dcra-projects.outputs.deployment_status == 'success' || needs.call-build-and-deploy-workflow-for-dcra-marketplace.outputs.deployment_status == 'success' }}
-    needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fail job
-        run: |
-          echo "::setFailed::Deployment failed"
-
   capture:
-    needs: ["reserve-ci-instance", "fail-job-if-deployment-not-successful"]
+    needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
     runs-on: ubuntu-latest
     container: ${{ inputs.docker-image-for-capture }}
     timeout-minutes: 35
