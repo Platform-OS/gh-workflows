@@ -44,7 +44,7 @@ jobs:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
   capture:
-    needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
+    needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-marketplace"]
     if: ${{ success() }}
     runs-on: ubuntu-latest
     container: ${{ inputs.docker-image-for-capture }}
