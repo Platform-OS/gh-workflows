@@ -1,0 +1,200 @@
+name: Compare screenshots
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: Repository to get base screenshots from
+        required: true
+        type: string
+      docker_image_for_compare:
+        description: Docker image to be used when running the compare job
+        required: true
+        type: string
+
+jobs:
+  pre_job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          github_token: ${{ github.token }}
+          paths_ignore: '["**/README.md"]'
+          do_not_skip: '["push"]'
+
+  reserve-ci-instance:
+    needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    container: alpine:3.15
+    outputs:
+      mpkit-url: ${{ steps.reserve.outputs.mpkit-url }}
+      report-path: ${{ steps.reserve.outputs.report-path }}
+    steps:
+      - name: Get ci-instance-url
+        id: reserve
+        uses: Platform-OS/ci-repository-reserve-instance-url@0.0.9
+        with:
+          repository-url: https://ci-repository.staging.oregon.platform-os.com
+          method: reserve
+          pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
+
+  call-build-and-deploy-workflow-for-dcra-projects:
+    if: ${{ github.repository != 'Platform-OS/marketplace-dcra' }}
+    needs: ["reserve-ci-instance"]
+    uses: ./.github/workflows/deploy_dcra.yml
+    secrets: inherit
+    with:
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+
+  call-build-and-deploy-workflow-for-dcra-marketplace:
+    if: ${{ github.repository == 'Platform-OS/marketplace-dcra' }}
+    needs: ["reserve-ci-instance"]
+    uses: ./.github/workflows/deploy_dcra_market.yml
+    secrets: inherit
+    with:
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+
+  compare:
+    needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
+    if: ${{ always() && !cancelled() && !failure() }}
+    runs-on: ubuntu-latest
+    container: ${{ inputs.docker_image_for_compare }}
+    timeout-minutes: 20
+    strategy:
+      max-parallel: 1
+      matrix:
+        resolution: ["desktop", "mobile"]
+    outputs:
+      desktop-diff-conclusion: ${{ steps.diff-test.outputs.desktop-diff-conclusion }}
+      desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
+      mobile-diff-conclusion: ${{ steps.diff-test.outputs.mobile-diff-conclusion }}
+      mobile-diff-report-url: ${{ steps.diff-test.outputs.mobile-diff-report-url }}
+    env:
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+      UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Install test dependencies
+        run: |
+          npm install --prefix tests
+        shell: sh
+
+      - uses: actions/download-artifact@v4
+        if: success()
+        with:
+          path: ./tests/visual-tests/snapshots/
+          pattern: ${{ matrix.resolution }}
+          github-token: ${{ github.token }}
+          repository: ${{ inputs.repository }}
+          run-id: ${{ vars.ARTIFACT_WORKFLOW_RUN_ID }}
+
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
+        name: Compare screenshots for ${{ matrix.resolution }} resolution
+        id: diff-test
+        if: success()
+        with:
+          base: release_candidate
+          npm-prefix: tests
+          resolution: ${{ matrix.resolution }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-diff
+
+  notify:
+    needs: ["reserve-ci-instance", "compare"]
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CI: true
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+      UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
+    steps:
+
+      - name: Send notification to Slack
+        id: notify-slack
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "channel": "test-reports",
+              "text": "Visual regression tests",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "testcafe blink diff visual regression tests"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Actor:*\n${{ github.actor }}\n"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View action run>"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                      "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          desktop-result-icon: ${{ needs.compare.outputs.desktop-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          mobile-result-icon: ${{ needs.compare.outputs.mobile-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+
+  cleanup:
+    if: ${{ always() }}
+    needs: ["reserve-ci-instance", "notify"]
+    runs-on: ubuntu-latest
+    container: alpine:3.15
+    steps:
+      - name: release ci-instance-url
+        uses: Platform-OS/ci-repository-reserve-instance-url@0.0.9
+        with:
+          method: release
+          repository-url: https://ci-repository.staging.oregon.platform-os.com
+          pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
