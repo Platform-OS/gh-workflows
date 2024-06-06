@@ -4,6 +4,7 @@ on:
   workflow_call:
     inputs:
       base-branch-for-capturing:
+        description: 'Base branch to get base screenshots from'
         required: true
         type: string
       docker-image-for-capture:
