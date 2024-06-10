@@ -67,7 +67,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        resolution: ["desktop", "mobile"]
+        resolution: ["desktop", "tablet", "mobile"]
     outputs:
       desktop-diff-conclusion: ${{ steps.diff-test.outputs.desktop-diff-conclusion }}
       desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
@@ -175,7 +175,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                      "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
+                      "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.tablet-result-icon }} <${{ needs.compare.outputs.tablet-diff-report-url }}|View test report for tablet resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
                   }
                 }
               ]
@@ -184,6 +184,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
           desktop-result-icon: ${{ needs.compare.outputs.desktop-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          tablet-result-icon: ${{ needs.compare.outputs.tablet-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
           mobile-result-icon: ${{ needs.compare.outputs.mobile-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
 
   cleanup:
