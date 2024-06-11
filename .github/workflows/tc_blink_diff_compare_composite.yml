@@ -73,6 +73,8 @@ jobs:
       desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
       mobile-diff-conclusion: ${{ steps.diff-test.outputs.mobile-diff-conclusion }}
       mobile-diff-report-url: ${{ steps.diff-test.outputs.mobile-diff-report-url }}
+      tablet-diff-conclusion: ${{ steps.diff-test.outputs.tablet-diff-conclusion }}
+      tablet-diff-report-url: ${{ steps.diff-test.outputs.tablet-diff-report-url }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
