@@ -191,7 +191,7 @@ jobs:
 
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance", "notify"]
+    needs: ["reserve-ci-instance"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
