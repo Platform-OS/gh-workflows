@@ -15,12 +15,9 @@ on:
         required: false
         type: string
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   pre_job:
-    # continue-on-error: true # Uncomment once integration is finished
     runs-on: ubuntu-latest
-    # Map a step output to a job output
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -50,7 +47,6 @@ jobs:
 
   deploy:
     needs: ["reserve-ci-instance"]
-    #if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     container: ${{ inputs.docker_image_for_compare }}
     env:
@@ -79,18 +75,19 @@ jobs:
   compare:
     needs: ["reserve-ci-instance", "deploy"]
     runs-on: ubuntu-latest
-    #if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     container: ${{ inputs.docker_image_for_compare }}
     timeout-minutes: 35
     strategy:
       max-parallel: 1
       matrix:
-        resolution: ["desktop", "mobile"]
+        resolution: ["desktop", "tablet", "mobile"]
     outputs:
       desktop-diff-conclusion: ${{ steps.diff-test.outputs.desktop-diff-conclusion }}
       desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
       mobile-diff-conclusion: ${{ steps.diff-test.outputs.mobile-diff-conclusion }}
       mobile-diff-report-url: ${{ steps.diff-test.outputs.mobile-diff-report-url }}
+      tablet-diff-conclusion: ${{ steps.diff-test.outputs.tablet-diff-conclusion }}
+      tablet-diff-report-url: ${{ steps.diff-test.outputs.tablet-diff-report-url }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
@@ -190,7 +187,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                      "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
+                      "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.tablet-result-icon }} <${{ needs.compare.outputs.tablet-diff-report-url }}|View test report for tablet resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
                   }
                 }
               ]
@@ -200,6 +197,7 @@ jobs:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
           desktop-result-icon: ${{ needs.compare.outputs.desktop-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
           mobile-result-icon: ${{ needs.compare.outputs.mobile-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          tablet-result-icon: ${{ needs.compare.outputs.tablet-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
 
   cleanup:
     if: ${{ always() }}
