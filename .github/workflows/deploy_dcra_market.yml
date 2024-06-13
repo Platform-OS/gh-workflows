@@ -1,0 +1,134 @@
+name: Build and Deploy
+
+on:
+  workflow_call:
+    inputs:
+      MPKIT_URL:
+        description: 'MPKIT URL'
+        required: true
+        default: ''
+        type: string
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ inputs.MPKIT_URL }}
+      CI: false
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      DEBUG: 1
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Cache Node Modules
+        id: cache-node-modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            src_app/node_modules
+            tests/node_modules
+            src_site/node_modules
+            modules/admin/react-app/node_modules
+          key: cache-node-modules-${{ hashFiles('package-lock.json', 'tests/package-lock.json', 'src_app/package-lock.json', 'src_site/package-lock.json', 'modules/admin/react-app/package-lock.json') }}
+
+      - name: Install Dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm run install:ci
+
+      - name: Set SHA
+        run: |
+          echo "INSTANCE_DOMAIN=${MPKIT_URL/https:\/\//}" >> $GITHUB_ENV
+          echo "SRC_APP_SHA=$(git rev-list -1 HEAD -- src_app)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Cache src_app Assets
+        id: cache-src_app-assets
+        uses: actions/cache@v3
+        with:
+          path: |
+            app/assets/app
+            app/views/layouts/app.liquid
+          key: ${{env.INSTANCE_DOMAIN}}-src-app-assets-${{ env.SRC_APP_SHA }}
+
+      - name: Build src_app
+        if: steps.cache-src_app-assets.outputs.cache-hit != 'true'
+        env:
+          PUBLIC_URL: "${{ env.MPKIT_URL}}/assets/app/"
+          REACT_APP_API_URL: "${{env.MPKIT_URL}}/api"
+        shell: sh
+        run: |
+          echo "-----------------------------------------"
+          echo $PUBLIC_URL
+          echo $REACT_APP_API_URL
+          echo "-----------------------------------------"
+
+          npm run --prefix src_app build
+
+      - name: Set SHA
+        run: |
+          echo "SRC_SITE_SHA=$(git rev-list -1 HEAD -- src_site)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Cache src_site Assets
+        id: cache-src_site-assets
+        uses: actions/cache@v3
+        with:
+          path: |
+            app/assets/site
+            app/views/partials/layout/assets.liquid
+          key: src_site-assets-1-${{ env.SRC_SITE_SHA }}
+
+      - name: Build src_site
+        if: steps.cache-src_site-assets.outputs.cache-hit != 'true'
+        shell: sh
+        run: npm run build:site
+
+      - name: Set SHA
+        run: |
+          echo "ADMIN_SHA=$(git rev-list -1 HEAD -- modules/admin/react-app)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Cache admin Assets
+        id: cache-admin-assets
+        uses: actions/cache@v3
+        with:
+          path: |
+            modules/admin/public/assets
+            modules/admin/public/views/layouts/index.liquid
+          key: ${{env.INSTANCE_DOMAIN}}-admin-assets-${{ env.ADMIN_SHA }}
+
+      - name: Build Admin
+        if: steps.cache-admin-assets.outputs.cache-hit != 'true'
+        env:
+          PUBLIC_URL: "${{ env.MPKIT_URL}}/assets/modules/admin/"
+          REACT_APP_API_URL: ${{ env.MPKIT_URL }}/admin-api
+        shell: sh
+        run: |
+          set -e
+          echo "-----------------------------------------"
+          echo $PUBLIC_URL
+          echo $REACT_APP_API_URL
+          echo "-----------------------------------------"
+          npm run --prefix modules/admin build:ci
+
+      - name: Deploy
+        env:
+          CI: true
+        shell: sh
+        run: |
+          set -e
+          unset DEBUG
+          npm -g install @platformos/pos-cli
+
+          sh ./tests/seed.sh

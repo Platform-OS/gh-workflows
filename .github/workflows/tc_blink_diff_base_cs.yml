@@ -6,26 +6,13 @@ on:
       base-branch-for-capturing:
         required: true
         type: string
+      docker-image-for-capture:
+        description: 'Docker image to be used when capturing screenshots'
+        required: true
+        type: string
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  pre_job:
-    # continue-on-error: true # Uncomment once integration is finished
-    runs-on: ubuntu-latest
-    # Map a step output to a job output
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
-    steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@master
-        with:
-          github_token: ${{ github.token }}
-          paths_ignore: '["**/README.md"]'
-          do_not_skip: '["push"]'
-
   reserve-ci-instance:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     container: alpine:3.15
     outputs:
@@ -40,25 +27,20 @@ jobs:
           method: reserve
           pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
 
-  capture:
+  deploy:
     needs: ["reserve-ci-instance"]
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
-    container: platformos/testcafe:4.17.0-3.5.0
-    timeout-minutes: 35
-    strategy:
-      max-parallel: 1
-      matrix:
-        resolution: ["desktop", "tablet", "mobile"]
+    container: ${{ inputs.docker-image-for-capture }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
-      CI: true
+      CI: false
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      DEBUG: 1
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: true
+      - uses: actions/checkout@v4
 
       - name: Build
         shell: sh
@@ -73,18 +55,40 @@ jobs:
          set -e
          sh seed/seed.sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@0.0.2
+  capture:
+    needs: ["reserve-ci-instance", "deploy"]
+    runs-on: ubuntu-latest
+    container: ${{ inputs.docker-image-for-capture }}
+    timeout-minutes: 35
+    strategy:
+      max-parallel: 1
+      matrix:
+        resolution: ["desktop", "tablet", "mobile"]
+    env:
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        shell: sh
+        run: |
+          set -eu
+          npm install
+
+      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
         if: success() || failure()
         with:
-          test-name: tc-${{ matrix.resolution }}-snapshots-capture
           base: ${{ inputs.base-branch-for-capturing }}
-        env:
           resolution: ${{ matrix.resolution }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-capture
 
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance","capture"]
+    needs: ["reserve-ci-instance", "deploy", "capture"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:

@@ -3,16 +3,21 @@ name: Compare screenshots
 on:
   workflow_call:
     inputs:
+      repository:
+        description: Repository to get base screenshots from
+        required: true
+        type: string
+      docker_image_for_compare:
+        description: Docker image to be used when running the compare job
+        required: true
+        type: string
       project-name:
         required: false
         type: string
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   pre_job:
-    # continue-on-error: true # Uncomment once integration is finished
     runs-on: ubuntu-latest
-    # Map a step output to a job output
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -25,7 +30,7 @@ jobs:
 
   reserve-ci-instance:
     needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    #if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     container: alpine:3.15
     outputs:
@@ -40,31 +45,19 @@ jobs:
           method: reserve
           pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
 
-  compare:
+  deploy:
     needs: ["reserve-ci-instance"]
     runs-on: ubuntu-latest
-    container: platformos/testcafe:4.7.2-2.1.0
-    timeout-minutes: 35
-    strategy:
-      max-parallel: 1
-      matrix:
-        resolution: ["desktop", "mobile"]
-    outputs:
-      desktop-diff-conclusion: ${{ steps.diff-test.outputs.desktop-diff-conclusion }}
-      desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
-      mobile-diff-conclusion: ${{ steps.diff-test.outputs.mobile-diff-conclusion }}
-      mobile-diff-report-url: ${{ steps.diff-test.outputs.mobile-diff-report-url }}
+    container: ${{ inputs.docker_image_for_compare }}
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
-      UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
-      CI: true
+      CI: false
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      DEBUG: 1
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: true
+      - uses: actions/checkout@v4
 
       - name: Build
         shell: sh
@@ -79,20 +72,57 @@ jobs:
          set -e
          sh seed/seed.sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff@7149159f4bdbe6a32216683703a2883e445a0614
+  compare:
+    needs: ["reserve-ci-instance", "deploy"]
+    runs-on: ubuntu-latest
+    container: ${{ inputs.docker_image_for_compare }}
+    timeout-minutes: 35
+    strategy:
+      max-parallel: 1
+      matrix:
+        resolution: ["desktop", "tablet", "mobile"]
+    outputs:
+      desktop-diff-conclusion: ${{ steps.diff-test.outputs.desktop-diff-conclusion }}
+      desktop-diff-report-url: ${{ steps.diff-test.outputs.desktop-diff-report-url }}
+      mobile-diff-conclusion: ${{ steps.diff-test.outputs.mobile-diff-conclusion }}
+      mobile-diff-report-url: ${{ steps.diff-test.outputs.mobile-diff-report-url }}
+      tablet-diff-conclusion: ${{ steps.diff-test.outputs.tablet-diff-conclusion }}
+      tablet-diff-report-url: ${{ steps.diff-test.outputs.tablet-diff-report-url }}
+    env:
+      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+      UPLOAD_HOST: https://tests.qa0.oregon.platformos.com
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        shell: sh
+        run: |
+          set -eu
+          npm install
+
+      - uses: actions/download-artifact@v4
+        if: success()
+        with:
+          path: ./tests/visual-tests/snapshots/
+          pattern: ${{ matrix.resolution }}
+          github-token: ${{ github.token }}
+          repository: ${{ inputs.repository }}
+          run-id: ${{ vars.ARTIFACT_WORKFLOW_RUN_ID }}
+
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         id: diff-test
         if: success() || failure()
         with:
           base: master
-          project-name: ${{ inputs.project-name }}
-          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          test-name: tc-${{ matrix.resolution }}-snapshots-diff
-        env:
           resolution: ${{ matrix.resolution }}
+          test-name: tc-${{ matrix.resolution }}-snapshots-diff
 
   notify:
-    needs: ["reserve-ci-instance", "compare"]
+    needs: ["reserve-ci-instance", "deploy", "compare"]
     if: ${{ success() || failure() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -157,7 +187,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                      "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
+                      "text": "${{ env.desktop-result-icon }} <${{ needs.compare.outputs.desktop-diff-report-url }}|View test report for desktop resolution>\n${{ env.tablet-result-icon }} <${{ needs.compare.outputs.tablet-diff-report-url }}|View test report for tablet resolution>\n${{ env.mobile-result-icon }} <${{ needs.compare.outputs.mobile-diff-report-url }}|View test report for mobile resolution>\n"
                   }
                 }
               ]
@@ -167,10 +197,11 @@ jobs:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
           desktop-result-icon: ${{ needs.compare.outputs.desktop-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
           mobile-result-icon: ${{ needs.compare.outputs.mobile-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
+          tablet-result-icon: ${{ needs.compare.outputs.tablet-diff-conclusion == 'success' && ':white_check_mark:' || ':x:' }}
 
   cleanup:
     if: ${{ always() }}
-    needs: ["reserve-ci-instance","compare"]
+    needs: ["reserve-ci-instance", "compare", "notify"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:

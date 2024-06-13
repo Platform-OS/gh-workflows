@@ -4,6 +4,7 @@ on:
   workflow_call:
     inputs:
       base-branch-for-capturing:
+        description: 'Base branch to get base screenshots from'
         required: true
         type: string
       docker-image-for-capture:
@@ -27,87 +28,32 @@ jobs:
           method: reserve
           pos-ci-repo-token: ${{ secrets.POS_CI_REPO_ACCESS_TOKEN }}
 
-  deploy:
+  call-build-and-deploy-workflow-for-dcra-projects:
+    if: ${{ github.repository != 'Platform-OS/marketplace-dcra' }}
     needs: ["reserve-ci-instance"]
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
-      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
+    uses: ./.github/workflows/deploy_dcra.yml
+    secrets: inherit
+    with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
-      CI: false
-      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-      DEBUG: 1
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: true
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Cache Node Modules
-        id: cache-node-modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            front_app/node_modules
-          key: cache-node-modules-${{ hashFiles('front_app/package-lock.json') }}
-
-      - name: Install Dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm run install:ci
-
-      - name: Set SHA
-        run: |
-          echo "::set-env name=FRONT_APP_SHA::$( git rev-list -1 HEAD -- front_app )"
-        shell: bash
-
-      - name: Cache front_app Assets
-        id: cache-front_app-assets
-        uses: actions/cache@v2
-        with:
-          path: |
-            app/assets/app
-            app/views/layouts/app.liquid
-          key: ${{env.MPKIT_URL}}-front_app-assets-${{ env.FRONT_APP_SHA }}
-
-      - name: Build front_app
-        if: steps.cache-front_app-assets.outputs.cache-hit != 'true'
-        env:
-          PUBLIC_URL: "${{ env.MPKIT_URL}}/assets/app/"
-          REACT_APP_API_URL: "${{env.MPKIT_URL}}/api"
-        shell: sh
-        run: |
-          echo "-----------------------------------------"
-          echo $PUBLIC_URL
-          echo $REACT_APP_API_URL
-          echo "-----------------------------------------"
-          npm run --prefix front_app build
-
-      - name: Deploy
-        env:
-          CI: true
-        shell: sh
-        run: |
-          set -e
-          unset DEBUG
-          npm -g install @platformos/pos-cli
-
-          sh ./tests/seed.sh
+  call-build-and-deploy-workflow-for-dcra-marketplace:
+    if: ${{ github.repository == 'Platform-OS/marketplace-dcra' }}
+    needs: ["reserve-ci-instance"]
+    uses: ./.github/workflows/deploy_dcra_market.yml
+    secrets: inherit
+    with:
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
   capture:
-    needs: ["reserve-ci-instance", "deploy"]
-    if: success()
+    needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
+    if: ${{ always() && !cancelled() && !failure() }}
     runs-on: ubuntu-latest
     container: ${{ inputs.docker-image-for-capture }}
     timeout-minutes: 35
     strategy:
       max-parallel: 1
       matrix:
-        resolution: ["desktop", "mobile"]
+        resolution: ["desktop", "tablet", "mobile"]
     env:
       MPKIT_EMAIL: ${{ secrets.MPKIT_EMAIL }}
       MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
@@ -126,7 +72,7 @@ jobs:
 
       - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
-        if: success() || failure()
+        if: success()
         with:
           base: ${{ inputs.base-branch-for-capturing }}
           npm-prefix: tests
@@ -134,8 +80,8 @@ jobs:
           test-name: tc-${{ matrix.resolution }}-snapshots-capture
 
   cleanup:
+    needs: ["reserve-ci-instance", "capture"]
     if: ${{ always() }}
-    needs: ["reserve-ci-instance","deploy","capture"]
     runs-on: ubuntu-latest
     container: alpine:3.15
     steps:
