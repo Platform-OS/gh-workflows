@@ -102,7 +102,7 @@ jobs:
           repository: ${{ inputs.repository }}
           run-id: ${{ vars.ARTIFACT_WORKFLOW_RUN_ID }}
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff@gh-artifacts
+      - uses: Platform-OS/gh-action-run-tc-blink-diff@main
         name: Compare screenshots for ${{ matrix.resolution }} resolution
         id: diff-test
         if: success()

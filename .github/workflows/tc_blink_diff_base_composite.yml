@@ -70,7 +70,7 @@ jobs:
           npm install --prefix tests
         shell: sh
 
-      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@gh-artifacts
+      - uses: Platform-OS/gh-action-run-tc-blink-diff-capture-base-snapshots@main
         name: Capture base screenshots for ${{ matrix.resolution }} resolution
         if: success()
         with:
