@@ -58,6 +58,14 @@ jobs:
     with:
       MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
 
+  intentionally-fail-the-job:
+    needs: ["reserve-ci-instance"]
+    if: ${{ always() && !cancelled() && !failure() && needs.pre_job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail the job
+        run: exit 1
+
   compare:
     needs: ["reserve-ci-instance", "call-build-and-deploy-workflow-for-dcra-projects", "call-build-and-deploy-workflow-for-dcra-marketplace"]
     if: ${{ always() && !cancelled() && !failure() && needs.pre_job.outputs.should_skip != 'true' }}
