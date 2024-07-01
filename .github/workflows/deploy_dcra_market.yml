@@ -122,6 +122,10 @@ jobs:
           echo "-----------------------------------------"
           npm run --prefix modules/admin build:ci
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
       - name: Deploy
         env:
           CI: true
