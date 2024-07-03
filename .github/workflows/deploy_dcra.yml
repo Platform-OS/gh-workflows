@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
 
       - name: Cache Node Modules
         id: cache-node-modules
@@ -68,10 +68,6 @@ jobs:
           echo $REACT_APP_API_URL
           echo "-----------------------------------------"
           npm run --prefix front_app build
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
 
       - name: Deploy
         env:
