@@ -71,6 +71,7 @@ jobs:
           npm run --prefix front_app build
 
       - name: Substitute paymentus key in migration
+        if: ${{ github.repository != 'Platform-OS/dcra-cfo' }}
         run: |
           sed -i "s/PAYMENTUS_SECRET_KEY_PLACEHOLDER/${PAYMENTUS_SECRET_KEY}/g" tests/post_import/app/migrations/20230619113519_set_paymentus_creds.liquid
 
