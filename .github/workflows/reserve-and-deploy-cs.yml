@@ -1,0 +1,95 @@
+name: ZAP TEST
+on:
+  workflow_call:
+    inputs:
+      pw-container:
+        required: true
+        type: string
+      ci-ps-repository-url:
+        required: true
+        type: string
+    outputs:
+      mpkit-url:
+        value: ${{ jobs.reserve-ci-instance.outputs.mpkit-url }}
+      report-path:
+        value: ${{ jobs.reserve-ci-instance.outputs.report-path }}
+    secrets:
+      mpkit-email:
+        required: true
+      pos-ci-ps-repo-access-token:
+        required: true
+jobs:
+  pre_job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          github_token: ${{ github.token }}
+          paths_ignore: '["**/README.md"]'
+          do_not_skip: '["push"]'
+
+  reserve-ci-instance:
+    needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    container: alpine:latest
+    outputs:
+      mpkit-url: ${{ steps.reserve.outputs.mpkit-url }}
+      report-path: ${{ steps.reserve.outputs.report-path }}
+    steps:
+      - name: Get ci-instance-url
+        id: reserve
+        uses: Platform-OS/ci-repository-reserve-instance-url@0.1.2
+        with:
+          repository-url: ${{ inputs.ci-ps-repository-url }}
+          method: reserve
+          pos-ci-repo-token: ${{ secrets.pos-ci-ps-repo-access-token }}
+
+  deploy:
+    needs: reserve-ci-instance
+    runs-on: ubuntu-latest
+    container: ${{ inputs.pw-container }}
+    timeout-minutes: 15
+    env:
+      CI: true
+      MPKIT_EMAIL: ${{ secrets.mpkit-email }}
+      MPKIT_URL: ${{ needs.reserve-ci-instance.outputs.mpkit-url }}
+    steps:
+      - name: Get MPKIT token
+        id: get-token
+        uses: Platform-OS/ci-repository-reserve-instance-url@0.1.2
+        with:
+          method: get-token
+          repository-url: ${{ inputs.ci-ps-repository-url }}
+          pos-ci-repo-token: ${{ secrets.pos-ci-ps-repo-access-token }}
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: ESLint
+        shell: sh
+        run: |
+          echo npx eslint src/js --ext .js
+
+      - name: Build
+        shell: sh
+        run: |
+          set -eu
+          npm install
+          ./scripts/inject_git_version.sh
+
+      - name: Deploy
+        timeout-minutes: 10
+        shell: sh
+        env:
+          MPKIT_TOKEN: ${{ steps.get-token.outputs.mpkit-token }}
+        run: |
+          set -eu
+          rm app/pos-modules.*
+          sh pw_tests/data/seed/seed.sh
