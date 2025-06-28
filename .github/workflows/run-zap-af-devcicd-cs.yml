@@ -1,0 +1,43 @@
+name: Run ZAP Automation Plan with Dev CICD Policy
+on:
+  workflow_call:
+    inputs:
+      MPKIT_URL:
+        required: true
+        type: string
+    secrets:
+      E2E_TEST_PASSWORD:
+        required: true
+      POS_CI_PS_REPO_ACCESS_TOKEN:
+        required: true
+
+jobs:
+  zap-dast:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      MPKIT_URL: ${{ inputs.MPKIT_URL }}
+      POS_CI_PS_REPO_ACCESS_TOKEN: ${{ secrets.POS_CI_PS_REPO_ACCESS_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Change permissions for zap directory
+        run: chmod -R 777 zap
+
+      - name: Run ZAP Dev CICD Automation Plan
+        uses: zaproxy/action-af@v0.2.0
+        with:
+          plan: zap/automation-plan-dev-cicd.yaml
+          docker_env_vars: |
+            E2E_TEST_PASSWORD=${{ env.E2E_TEST_PASSWORD }}
+            MPKIT_URL=${{ env.MPKIT_URL }}
+
+      - name: Upload ZAP Scan Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap_scan
+          path: |
+            zap/*/
+            zap/*.html
