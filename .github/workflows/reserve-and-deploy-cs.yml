@@ -1,4 +1,4 @@
-name: ZAP TEST
+name: Reserve and Deploy CS
 on:
   workflow_call:
     inputs:
