@@ -18,6 +18,7 @@ on:
         required: true
       pos-ci-ps-repo-access-token:
         required: true
+
 jobs:
   pre_job:
     runs-on: ubuntu-latest
