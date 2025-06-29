@@ -95,6 +95,7 @@ jobs:
           npm run build
 
       - name: Deploy
+        if: ${{ github.repository == 'Platform-OS/pos-module-community' }}
         timeout-minutes: 10
         shell: sh
         env:
@@ -103,3 +104,14 @@ jobs:
           set -eu
           rm app/pos-modules.*
           sh pw_tests/data/seed/seed.sh
+
+      - name: Deploy
+        if: ${{ github.repository == 'Platform-OS/styleseeker' }}
+        timeout-minutes: 10
+        shell: sh
+        env:
+          MPKIT_TOKEN: ${{ steps.get-token.outputs.mpkit-token }}
+        run: |
+          set -eu
+          rm app/pos-modules.*
+          sh tests/data/seed/seed.sh
