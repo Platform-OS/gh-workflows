@@ -78,12 +78,21 @@ jobs:
         run: |
           echo npx eslint src/js --ext .js
 
-      - name: Build
+      - name: Build and inject git version
+        if: ${{ github.repository == 'Platform-OS/pos-module-community' }}
         shell: sh
         run: |
           set -eu
           npm install
           ./scripts/inject_git_version.sh
+
+      - name: Build
+        if: ${{ github.repository == 'Platform-OS/styleseeker' }}
+        shell: sh
+        run: |
+          set -eu
+          npm ci
+          npm run build
 
       - name: Deploy
         timeout-minutes: 10
