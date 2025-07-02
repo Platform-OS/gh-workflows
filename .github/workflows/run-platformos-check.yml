@@ -1,6 +1,6 @@
 name: Run platformos-check on Liquid files
 on:
-  workflow_call:
+  workflow_call
 
 jobs:
   run-platformos-check:
