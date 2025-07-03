@@ -1,16 +1,12 @@
 name: Run platformos-check on Liquid files
 on:
   workflow_call:
-    secrets:
-      MPKIT_TOKEN:
-        required: true
 
 jobs:
   run-platformos-check:
     runs-on: ubuntu-latest
     env:
       CI: true
-      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
