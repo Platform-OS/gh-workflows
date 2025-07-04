@@ -47,7 +47,7 @@ jobs:
           set -e  # Re-enable exit on error
 
           jq . ${{ env.LOGS_DIR }}/platformos-check-raw.json | tee ${{ env.LOGS_DIR }}/platformos-check.json
-          
+
           exit $docker_exit_code
 
       - name: Upload logs
@@ -65,6 +65,16 @@ jobs:
         run: |
           echo "# PlatformOS Check Summary :checkered_flag:" >> $GITHUB_STEP_SUMMARY
           echo "## Result: ${{ steps.run_check.outcome }} ${{ env.RESULT_ICON }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "${{ env.LOGS_DIR }}/platformos-check.json" ]; then
+            echo "## Issues Found" >> $GITHUB_STEP_SUMMARY
+            echo "| File | Line | Column | Severity | Check | Message |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|------|--------|----------|-------|---------|" >> $GITHUB_STEP_SUMMARY
+            jq -r '.[] | "| \(.path) | \(.start_line // "N/A") | \(.start_column // "N/A") | \(.severity) | \(.check) | \(.message) |"' ${{ env.LOGS_DIR }}/platformos-check.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "| N/A | N/A | N/A | N/A | N/A | Failed to parse JSON output |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## No output file found" >> $GITHUB_STEP_SUMMARY
+          fi
         env:
           RESULT_ICON: ${{ steps.run_check.outcome == 'success' && ':white_check_mark:' || ':x:' }}
 
