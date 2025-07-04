@@ -44,7 +44,7 @@ jobs:
             -e PLATFORMOS_CHECK_DEBUG_LOG_FILE=${{ env.DOCKER_WORKSPACE }}/${{ env.LOGS_DIR }}/platformos-check.log \
             platformos/platformos-check:latest -o json > ${{ env.LOGS_DIR }}/platformos-check-raw.json
 
-          jq . ${{ env.LOGS_DIR }}/platformos-check-raw.json | tee ${{ env.LOGS_DIR }}/platformos-check.json
+          jq . ${{ env.LOGS_DIR }}/platformos-check-raw.json | tee ${{ env.LOGS_DIR }}/platformos-check.json /dev/stderr
 
       - name: Upload logs
         if: always() && (steps.run_check.outcome == 'success' || steps.run_check.outcome == 'failure')
