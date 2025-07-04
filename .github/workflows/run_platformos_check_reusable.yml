@@ -71,7 +71,7 @@ jobs:
             echo "## Issues Found" >> $GITHUB_STEP_SUMMARY
             echo "| File | Line | Column | Severity | Check | Message |" >> $GITHUB_STEP_SUMMARY
             echo "|------|------|--------|----------|-------|---------|" >> $GITHUB_STEP_SUMMARY
-            jq -r '.[] | "| \(.path) | \(.start_line // "N/A") | \(.start_column // "N/A") | \(.severity) | \(.check) | \(.message) |"' ${{ env.LOGS_DIR }}/platformos-check.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "| N/A | N/A | N/A | N/A | N/A | Failed to parse JSON output |" >> $GITHUB_STEP_SUMMARY
+            jq -r '.[] | .path as $file | .offenses[] | "| \($file) | \(.start_row) | \(.start_column) | \(.severity) | \(.check) | \(.message) |"' ${{ env.LOGS_DIR }}/platformos-check.json >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "| N/A | N/A | N/A | N/A | N/A | Failed to parse JSON output |" >> $GITHUB_STEP_SUMMARY
           else
             echo "## No output file found" >> $GITHUB_STEP_SUMMARY
           fi
