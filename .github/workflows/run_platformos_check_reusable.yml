@@ -35,7 +35,6 @@ jobs:
       - name: Run platformos-check
         id: run_check
         if: steps.start_lsp.outcome == 'success'
-        continue-on-error: true
         run: |
           docker run -i \
             -v ${{ env.DOCKER_WORKSPACE }}:${{ env.DOCKER_WORKSPACE }} \
@@ -47,7 +46,7 @@ jobs:
           jq . ${{ env.LOGS_DIR }}/platformos-check-raw.json | tee ${{ env.LOGS_DIR }}/platformos-check.json /dev/stderr
 
       - name: Upload logs
-        if: always() && (steps.run_check.outcome == 'success' || steps.run_check.outcome == 'failure')
+        if: always() && steps.run_check.outcome != 'skipped'
         uses: actions/upload-artifact@v4
         with:
           name: platformos_check_logs_${{ github.run_id }}
@@ -57,7 +56,7 @@ jobs:
             ${{ env.LOGS_DIR }}/platformos-check-raw.json
 
       - name: Generate summary
-        if: (steps.run_check.outcome == 'success' || steps.run_check.outcome == 'failure')
+        if: always() && steps.run_check.outcome != 'skipped'
         run: |
           echo "# PlatformOS Check Summary :checkered_flag:" >> $GITHUB_STEP_SUMMARY
           echo "## Result: ${{ steps.run_check.outcome }} ${{ env.RESULT_ICON }}" >> $GITHUB_STEP_SUMMARY
@@ -65,7 +64,7 @@ jobs:
           RESULT_ICON: ${{ steps.run_check.outcome == 'success' && ':white_check_mark:' || ':x:' }}
 
       - name: Fail job if platformos-check failed
-        if: steps.run_check.outcome == 'failure'
+        if: always() && steps.run_check.outcome == 'failure'
         run: |
           echo "platformos-check failed — marking job as failed"
           exit 1
