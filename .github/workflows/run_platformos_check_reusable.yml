@@ -42,8 +42,11 @@ jobs:
             -e PLATFORMOS_CHECK_DEBUG=${{ env.PLATFORMOS_CHECK_DEBUG }} \
             -e PLATFORMOS_CHECK_DEBUG_LOG_FILE=${{ env.DOCKER_WORKSPACE }}/${{ env.LOGS_DIR }}/platformos-check.log \
             platformos/platformos-check:latest -o json > ${{ env.LOGS_DIR }}/platformos-check-raw.json
+          docker_exit_code=$?
 
-          jq . ${{ env.LOGS_DIR }}/platformos-check-raw.json | tee ${{ env.LOGS_DIR }}/platformos-check.json /dev/stderr
+          jq . ${{ env.LOGS_DIR }}/platformos-check-raw.json | tee ${{ env.LOGS_DIR }}/platformos-check.json
+          
+          exit $docker_exit_code
 
       - name: Upload logs
         if: always() && steps.run_check.outcome != 'skipped'
