@@ -36,6 +36,7 @@ jobs:
         id: run_check
         if: steps.start_lsp.outcome == 'success'
         run: |
+          set +e  # Disable exit on error
           docker run -i \
             -v ${{ env.DOCKER_WORKSPACE }}:${{ env.DOCKER_WORKSPACE }} \
             -w ${{ env.DOCKER_WORKSPACE }} \
@@ -43,6 +44,7 @@ jobs:
             -e PLATFORMOS_CHECK_DEBUG_LOG_FILE=${{ env.DOCKER_WORKSPACE }}/${{ env.LOGS_DIR }}/platformos-check.log \
             platformos/platformos-check:latest -o json > ${{ env.LOGS_DIR }}/platformos-check-raw.json
           docker_exit_code=$?
+          set -e  # Re-enable exit on error
 
           jq . ${{ env.LOGS_DIR }}/platformos-check-raw.json | tee ${{ env.LOGS_DIR }}/platformos-check.json
           
