@@ -4,15 +4,13 @@ on:
   workflow_call:
     inputs:
       docker_workspace:
-        description: 'Directory to scan (defaults to repository root)'
         required: false
-        default: ${{ github.workspace }}
         type: string
 
 env:
   CI: true
   PLATFORMOS_CHECK_DEBUG: true
-  DOCKER_WORKSPACE: ${{ inputs.docker_workspace }}
+  DOCKER_WORKSPACE: ${{ inputs.docker_workspace || github.workspace }}
   LOGS_DIR: logs
 
 jobs:
