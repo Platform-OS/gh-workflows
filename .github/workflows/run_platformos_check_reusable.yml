@@ -10,7 +10,7 @@ on:
 env:
   CI: true
   PLATFORMOS_CHECK_DEBUG: true
-  DOCKER_WORKSPACE: ${{ inputs.docker_workspace || github.workspace }}
+  DOCKER_WORKSPACE: ${{ inputs.docker_workspace && format('{0}/{1}', github.workspace, inputs.docker_workspace) || github.workspace }}
   LOGS_DIR: logs
 
 jobs:
