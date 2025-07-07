@@ -33,7 +33,7 @@ jobs:
             -v ${{ env.DOCKER_WORKSPACE }}:${{ env.DOCKER_WORKSPACE }} \
             -w ${{ env.DOCKER_WORKSPACE }} \
             -e PLATFORMOS_CHECK_DEBUG=${{ env.PLATFORMOS_CHECK_DEBUG }} \
-            -e PLATFORMOS_CHECK_DEBUG_LOG_FILE=${{ env.DOCKER_WORKSPACE }}/${{ env.LOGS_DIR }}/platformos-lsp.log \
+            -e PLATFORMOS_CHECK_DEBUG_LOG_FILE=${{ env.LOGS_DIR }}/platformos-lsp.log \
             platformos/platformos-lsp:latest
 
       - name: Run platformos-check
@@ -45,7 +45,7 @@ jobs:
             -v ${{ env.DOCKER_WORKSPACE }}:${{ env.DOCKER_WORKSPACE }} \
             -w ${{ env.DOCKER_WORKSPACE }} \
             -e PLATFORMOS_CHECK_DEBUG=${{ env.PLATFORMOS_CHECK_DEBUG }} \
-            -e PLATFORMOS_CHECK_DEBUG_LOG_FILE=${{ env.DOCKER_WORKSPACE }}/${{ env.LOGS_DIR }}/platformos-check.log \
+            -e PLATFORMOS_CHECK_DEBUG_LOG_FILE=${{ env.LOGS_DIR }}/platformos-check.log \
             platformos/platformos-check:latest -o json > ${{ env.LOGS_DIR }}/platformos-check-raw.json
           docker_exit_code=$?
           set -e  # Re-enable exit on error
