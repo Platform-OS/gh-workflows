@@ -5,6 +5,12 @@ on:
       MPKIT_URL:
         required: true
         type: string
+      FAST:
+        required: false
+        type: boolean
+      WEEKLY:
+        required: false
+        type: boolean
     secrets:
       E2E_TEST_PASSWORD:
         required: true
@@ -26,10 +32,20 @@ jobs:
       - name: Change permissions for zap directory
         run: chmod -R 777 zap
 
-      - name: Run ZAP Dev CICD Automation Plan
+      - name: Run ZAP Dev CICD Fast Automation Plan
+        if: ${{ inputs.FAST == true }}
         uses: zaproxy/action-af@v0.2.0
         with:
-          plan: zap/automation-plan-dev-cicd.yaml
+          plan: zap/cs-auto-plan-dev-cicd-fast.yaml
+          docker_env_vars: |
+            E2E_TEST_PASSWORD=${{ env.E2E_TEST_PASSWORD }}
+            MPKIT_URL=${{ env.MPKIT_URL }}
+
+      - name: Run ZAP Dev CICD Weekly Automation Plan
+        if: ${{ inputs.WEEKLY == true }}
+        uses: zaproxy/action-af@v0.2.0
+        with:
+          plan: zap/cs-auto-plan-dev-cicd-weekly.yaml
           docker_env_vars: |
             E2E_TEST_PASSWORD=${{ env.E2E_TEST_PASSWORD }}
             MPKIT_URL=${{ env.MPKIT_URL }}
