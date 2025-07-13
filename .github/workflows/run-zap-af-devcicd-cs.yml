@@ -30,6 +30,7 @@ jobs:
         run: chmod -R 777 zap
 
       - name: Run ZAP Dev CICD Automation Plan
+        id: run_plan
         uses: zaproxy/action-af@v0.2.0
         with:
           plan: ${{ inputs.PLAN }}
@@ -37,10 +38,14 @@ jobs:
             E2E_TEST_PASSWORD=${{ env.E2E_TEST_PASSWORD }}
             MPKIT_URL=${{ env.MPKIT_URL }}
 
-      - name: Show ZAP Scan Report
+      - name: Show ZAP Scan Report in the summary
+        if: always() && steps.run_plan.outcome != 'skipped'
         run: |
-          echo "ZAP Scan Report:"
-          cat zap/*.md
+          echo "# ZAP Dev CICD Automation Plan Summary :checkered_flag:" >> $GITHUB_STEP_SUMMARY
+          echo "## Result: ${{ steps.run_plan.outcome }} ${{ env.RESULT_ICON }}" >> $GITHUB_STEP_SUMMARY
+          cat zap/*.md >> $GITHUB_STEP_SUMMARY
+        env:
+          RESULT_ICON: ${{ steps.run_plan.outcome == 'success' && ':white_check_mark:' || ':x:' }}
 
       - name: Upload ZAP Scan Report
         uses: actions/upload-artifact@v4
@@ -48,4 +53,5 @@ jobs:
           name: zap_scan
           path: |
             zap/*/
+            zap/*.md
             zap/*.html
