@@ -37,6 +37,11 @@ jobs:
             E2E_TEST_PASSWORD=${{ env.E2E_TEST_PASSWORD }}
             MPKIT_URL=${{ env.MPKIT_URL }}
 
+      - name: Show ZAP Scan Report
+        run: |
+          echo "ZAP Scan Report:"
+          cat zap/*.md
+
       - name: Upload ZAP Scan Report
         uses: actions/upload-artifact@v4
         with:
