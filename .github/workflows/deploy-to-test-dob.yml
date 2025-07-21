@@ -1,0 +1,85 @@
+name: Deploy to Test
+on:
+  workflow_call:
+    inputs:
+      mpkit-url:
+        required: true
+        type: string
+    secrets:
+      mpkit-email:
+        required: true
+      mpkit-token:
+        required: true
+      paymentus-secret-key:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MPKIT_URL: ${{ inputs.mpkit-url }}
+      MPKIT_EMAIL: ${{ secrets.mpkit-email }}
+      MPKIT_TOKEN: ${{ secrets.mpkit-token }}
+      PAYMENTUS_SECRET_KEY: ${{ secrets.paymentus-secret-key }}
+      DEBUG: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ vars.NODE_VERSION }}
+
+      - name: Cache Node Modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            front_app/node_modules
+          key: cache-node-modules-${{ hashFiles('front_app/package-lock.json') }}
+
+      - name: Install Dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm run install:ci
+
+      - name: Set SHA
+        run: |
+          echo "FRONT_APP_SHA=$( git rev-list -1 HEAD -- front_app )" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Cache front_app Assets
+        id: cache-front_app-assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/assets/app
+            app/views/layouts/app.liquid
+          key: ${{env.MPKIT_URL}}-front_app-assets-${{ env.FRONT_APP_SHA }}
+
+      - name: Build front_app
+        if: steps.cache-front_app-assets.outputs.cache-hit != 'true'
+        env:
+          PUBLIC_URL: "${{ env.MPKIT_URL}}/assets/app/"
+          REACT_APP_API_URL: "${{ env.MPKIT_URL }}/api"
+        shell: sh
+        run: |
+          echo "-----------------------------------------"
+          echo $PUBLIC_URL
+          echo $REACT_APP_API_URL
+          echo "-----------------------------------------"
+          npm run --prefix front_app build
+
+      - name: Deploy
+        shell: sh
+        run: |
+          set -e
+          unset DEBUG
+          echo "Installing PlatformOS CLI..."
+          npm -g install @platformos/pos-cli
+          echo "Running deployment seed script..."
+          sh ./tests/seed.sh
+          echo "Deployment completed successfully"
+
