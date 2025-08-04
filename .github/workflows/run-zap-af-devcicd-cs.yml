@@ -12,7 +12,9 @@ on:
       E2E_TEST_PASSWORD:
         required: true
       POS_CI_PS_REPO_ACCESS_TOKEN:
-        required: true
+        required: false
+      MPKIT_TOKEN:
+        required: false
 
 jobs:
   zap-dast:
@@ -20,6 +22,7 @@ jobs:
     env:
       CI: true
       E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      MPKIT_TOKEN: ${{ secrets.MPKIT_TOKEN }}
       MPKIT_URL: ${{ inputs.MPKIT_URL }}
       POS_CI_PS_REPO_ACCESS_TOKEN: ${{ secrets.POS_CI_PS_REPO_ACCESS_TOKEN }}
     steps:
@@ -38,8 +41,20 @@ jobs:
             E2E_TEST_PASSWORD=${{ env.E2E_TEST_PASSWORD }}
             MPKIT_URL=${{ env.MPKIT_URL }}
 
+      - name: Check if ZAP Scan report has been generated
+        id: check_report
+        run: |
+          if [ ! -f zap/*.md ]; then
+            echo "ZAP Scan report not found. Skipping summary and upload."
+            echo "report=false" >> $GITHUB_OUTPUT
+          else
+            echo "ZAP Scan report found."
+            echo "report=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Show ZAP Scan Report in the summary
-        if: always() && steps.run_plan.outcome != 'skipped'
+        id: show_summary
+        if: always() && steps.run_plan.outcome != 'skipped' && steps.check_report.outputs.report == 'true'
         run: |
           echo "# ZAP Dev CICD Automation Plan Summary :checkered_flag:" >> $GITHUB_STEP_SUMMARY
           echo "## Result: ${{ steps.run_plan.outcome }} ${{ env.RESULT_ICON }}" >> $GITHUB_STEP_SUMMARY
@@ -48,6 +63,7 @@ jobs:
           RESULT_ICON: ${{ steps.run_plan.outcome == 'success' && ':white_check_mark:' || ':x:' }}
 
       - name: Upload ZAP Scan Report
+        if: steps.check_report.outputs.report == 'true' && steps.show_summary.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: zap_scan
