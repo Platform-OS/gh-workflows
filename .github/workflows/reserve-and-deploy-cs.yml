@@ -102,6 +102,7 @@ jobs:
         shell: sh
         env:
           MPKIT_TOKEN: ${{ steps.get-token.outputs.mpkit-token }}
+          E2E_TEST_PASSWORD: ${{ secrets.e2e-test-password }}
         run: |
           set -eu
           rm app/pos-modules.*
