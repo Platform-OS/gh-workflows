@@ -69,7 +69,6 @@ jobs:
           key: ${{ env.MPKIT_URL }}-front_app-assets-${{ env.FRONT_APP_SHA }}
 
       - name: Build front_app
-        if: steps.cache-front_app-assets.outputs.cache-hit != 'true'
         env:
           PUBLIC_URL: "${{ env.MPKIT_URL}}/assets/app/"
           REACT_APP_API_URL: "${{ env.MPKIT_URL }}/api"
@@ -150,7 +149,6 @@ jobs:
           key: ${{ env.INSTANCE_DOMAIN }}-src-app-assets-${{ env.SRC_APP_SHA }}
 
       - name: Build src_app
-        if: steps.cache-src_app-assets.outputs.cache-hit != 'true'
         env:
           PUBLIC_URL: "${{ env.MPKIT_URL}}/assets/app/"
           REACT_APP_API_URL: "${{ env.MPKIT_URL }}/api"
@@ -177,7 +175,6 @@ jobs:
           key: src_site-assets-1-${{ env.SRC_SITE_SHA }}
 
       - name: Build src_site
-        if: steps.cache-src_site-assets.outputs.cache-hit != 'true'
         shell: sh
         run: npm run build:site
 
@@ -196,7 +193,6 @@ jobs:
           key: ${{ env.INSTANCE_DOMAIN }}-admin-assets-${{ env.ADMIN_SHA }}
 
       - name: Build Admin
-        if: steps.cache-admin-assets.outputs.cache-hit != 'true'
         env:
           PUBLIC_URL: "${{ env.MPKIT_URL}}/assets/modules/admin/"
           REACT_APP_API_URL: ${{ env.MPKIT_URL }}/admin-api
