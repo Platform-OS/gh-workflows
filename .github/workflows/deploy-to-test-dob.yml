@@ -51,6 +51,7 @@ jobs:
           key: cache-node-modules-${{ hashFiles('front_app/package-lock.json') }}
 
       - name: Install Dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm run install:ci
 
       - name: Set SHA
@@ -125,6 +126,7 @@ jobs:
           key: cache-node-modules-${{ hashFiles('package-lock.json', 'tests/package-lock.json', 'src_app/package-lock.json', 'src_site/package-lock.json', 'modules/admin/react-app/package-lock.json') }}
 
       - name: Install Dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm run install:ci
 
       - name: Set Environment Variables
