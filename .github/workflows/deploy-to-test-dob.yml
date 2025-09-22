@@ -6,6 +6,11 @@ on:
         required: true
         type: string
         description: "Deployment type: 'frontapp' (front_app only) or 'full' (all apps)"
+      path-to-seed-script:
+        required: false
+        type: string
+        description: "Path to the seed script (default: ./tests/seed.sh)"
+        default: "./tests/seed.sh"
       ci-env:
         required: true
         type: boolean
@@ -88,7 +93,7 @@ jobs:
           echo "Installing PlatformOS CLI..."
           npm -g install @platformos/pos-cli
           echo "Running deployment seed script..."
-          sh ./tests/seed.sh
+          sh ${{ inputs.path-to-seed-script }}
           echo "Deployment completed successfully"
 
   deploy-full:
@@ -215,5 +220,5 @@ jobs:
           echo "Installing PlatformOS CLI..."
           npm -g install @platformos/pos-cli
           echo "Running deployment seed script..."
-          sh ./tests/seed.sh
+          sh ${{ inputs.path-to-seed-script }}
           echo "Deployment completed successfully"
