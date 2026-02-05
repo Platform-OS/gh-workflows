@@ -8,6 +8,9 @@ on:
       ci-ps-repository-url:
         required: true
         type: string
+      ref_name:
+        required: false
+        type: string
     outputs:
       mpkit-url:
         value: ${{ jobs.reserve-ci-instance.outputs.mpkit-url }}
@@ -22,21 +25,7 @@ on:
         required: true
 
 jobs:
-  pre_job:
-    runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
-    steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@master
-        with:
-          github_token: ${{ github.token }}
-          paths_ignore: '["**/README.md"]'
-          do_not_skip: '["push"]'
-
   reserve-ci-instance:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     container: alpine:latest
     outputs:
@@ -70,6 +59,8 @@ jobs:
           pos-ci-repo-token: ${{ secrets.pos-ci-ps-repo-access-token }}
 
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref_name }}
 
       - uses: actions/setup-node@v4
         with:
