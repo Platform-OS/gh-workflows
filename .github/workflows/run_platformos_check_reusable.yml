@@ -1,16 +1,7 @@
 name: Run platformos-check on Liquid files
 
 on:
-  push:
-    paths:
-      - '.github/workflows/lint.yml'
-      - 'app/**'
-      - 'modules/**'
-  pull_request:
-    paths:
-      - 'app/**'
-      - 'modules/**'
-  workflow_dispatch:
+  workflow_call:
 
 jobs:
   run-linter:
