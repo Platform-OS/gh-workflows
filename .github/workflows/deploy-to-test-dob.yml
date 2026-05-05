@@ -208,7 +208,7 @@ jobs:
           echo $PUBLIC_URL
           echo $REACT_APP_API_URL
           echo "-----------------------------------------"
-          npm run --prefix modules/admin build:ci
+          npm run --prefix modules/admin build
 
       - name: Deploy
         env:
