@@ -1,13 +1,20 @@
 name: Build and Deploy
-
 on:
   workflow_call:
     inputs:
-      MPKIT_URL:
-        description: 'MPKIT URL'
+      ci-env:
         required: true
-        default: ''
+        type: boolean
+      mpkit-url:
+        required: true
         type: string
+    secrets:
+      mpkit-email:
+        required: true
+      mpkit-token:
+        required: true
+      paymentus-secret-key:
+        required: true
 
 jobs:
   build-and-deploy:
@@ -120,7 +127,7 @@ jobs:
           echo $PUBLIC_URL
           echo $REACT_APP_API_URL
           echo "-----------------------------------------"
-          npm run --prefix modules/admin build:ci
+          npm run --prefix modules/admin build
 
       - name: Deploy
         env:
