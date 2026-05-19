@@ -92,6 +92,8 @@ jobs:
           unset DEBUG
           echo "Installing PlatformOS CLI..."
           npm -g install @platformos/pos-cli
+          echo "Check pos-cli version..."
+          pos-cli --version
           echo "Running deployment seed script..."
           sh ${{ inputs.path-to-seed-script }}
           echo "Deployment completed successfully"
