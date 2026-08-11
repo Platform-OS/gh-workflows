@@ -96,7 +96,7 @@ jobs:
           E2E_TEST_PASSWORD: ${{ secrets.e2e-test-password }}
         run: |
           set -eu
-          rm app/pos-modules.*
+          rm -f app/pos-modules.*
           sh tests/data/seed/seed.sh
 
       - name: Deploy
@@ -108,5 +108,5 @@ jobs:
           E2E_TEST_PASSWORD: ${{ secrets.e2e-test-password }}
         run: |
           set -eu
-          rm app/pos-modules.*
+          rm -f app/pos-modules.*
           sh tests/data/seed/seed.sh
